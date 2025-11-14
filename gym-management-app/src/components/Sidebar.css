@@ -1,0 +1,65 @@
+.sidebar {
+  position: sticky;
+  /* 👈 keeps it on screen */
+  top: 0;
+  /* align to top */
+  left: 0;
+  /* align to left */
+  height: 97vh;
+  /* full viewport height */
+  width: 240px;
+  /* same as before */
+  background-color: #1e1e2f;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+  /* optional shadow for depth */
+  z-index: 1000;
+  /* stays above page content */
+}
+
+.sidebar-header {
+  margin-bottom: 2rem;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ddd;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.sidebar-link:hover {
+  background: #2a2a3f;
+}
+
+.sidebar-link.active {
+  background: #3f3f5e;
+  color: #fff;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.sidebar-logout {
+  margin-top: auto;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.sidebar-logout:hover {
+  background: #c0392b;
+}
