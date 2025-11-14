@@ -5,9 +5,15 @@ import StudentList from "./StudentList";
 import StudentDetailsModal from "./StudentDetailsModal";
 import AddStudentModal from "./AddStudentModel"
 export type Student = {
-    id: number;
-    firstName: string;
-    lastName: string;
+  id: number;
+  firstName: string;
+  lastName: string;
+  cnp?: string;
+  dateOfBirth?: string;
+  subscriptionType?: string;
+  status?: string;
+  groupId?: number | null;
+  groupName?: string | null;
 };
 
 export type Group = {
@@ -72,10 +78,12 @@ export default function StudentsPage() {
         setFilteredStudents(list);
     }, [students, selectedGroup, searchQuery]);
 
-    const handleSelectStudent = (student: Student) => {
-        setSelectedStudent(student);
-        setDetailsModalOpen(true);
+    const handleSelectStudent = async (student: Student) => {
+      const res = await apiClient.get(`/students/${student.id}`);
+      setSelectedStudent(res.data); 
+      setDetailsModalOpen(true);
     };
+
 
     const handleDeleteStudent = async (id: number) => {
         await apiClient.delete(`/students/${id}`);
@@ -83,88 +91,96 @@ export default function StudentsPage() {
     };
 
     return (
-        <div style={{ display: "flex", minHeight: "100vh" }}>
-            <Sidebar />
+      <div style={{ display: "flex", minHeight: "100vh" }}>
+        <Sidebar />
 
-            <main style={{ padding: "1.5rem", flex: 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-                    <h1>🧍 Students</h1>
-                    <button
-                        onClick={() => setAddModalOpen(true)}
-                        style={{
-                            padding: "0.5rem 1rem",
-                            background: "#4CAF50",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                            marginBottom: "1rem",
-                        }}
-                    >
-                        ➕ Add Student
-                    </button>
-                </div>
+        <main style={{ padding: "1.5rem", flex: 1 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "1.5rem",
+            }}
+          >
+            <h1>🧍 Students</h1>
+            <button
+              onClick={() => setAddModalOpen(true)}
+              style={{
+                padding: "0.5rem 1rem",
+                background: "#4CAF50",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                marginBottom: "1rem",
+              }}
+            >
+              ➕ Add Student
+            </button>
+          </div>
 
+          {/* FILTERS BAR */}
+          <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem" }}>
+            <input
+              type="text"
+              placeholder="Search by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                padding: "0.5rem",
+                flex: 1,
+                borderRadius: "6px",
+                border: "1px solid #ccc",
+              }}
+            />
 
-                {/* FILTERS BAR */}
-                <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem" }}>
-                    <input
-                        type="text"
-                        placeholder="Search by name..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        style={{
-                            padding: "0.5rem",
-                            flex: 1,
-                            borderRadius: "6px",
-                            border: "1px solid #ccc",
-                        }}
-                    />
+            <select
+              value={selectedGroup}
+              onChange={(e) =>
+                setSelectedGroup(
+                  e.target.value === "all" ? "all" : Number(e.target.value)
+                )
+              }
+              style={{
+                padding: "0.5rem",
+                borderRadius: "6px",
+                border: "1px solid #ccc",
+              }}
+            >
+              <option value="all">All Groups</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-                    <select
-                        value={selectedGroup}
-                        onChange={(e) =>
-                            setSelectedGroup(
-                                e.target.value === "all" ? "all" : Number(e.target.value)
-                            )
-                        }
-                        style={{
-                            padding: "0.5rem",
-                            borderRadius: "6px",
-                            border: "1px solid #ccc",
-                        }}
-                    >
-                        <option value="all">All Groups</option>
-                        {groups.map((g) => (
-                            <option key={g.id} value={g.id}>
-                                {g.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+          <StudentList
+            students={filteredStudents}
+            onSelectStudent={handleSelectStudent}
+          />
 
-                <StudentList
-                    students={filteredStudents}
-                    onSelectStudent={handleSelectStudent}
-                />
-
-                <StudentDetailsModal
-                    isOpen={detailsModalOpen}
-                    student={selectedStudent}
-                    onClose={() => setDetailsModalOpen(false)}
-                    onDelete={handleDeleteStudent}
-                />
-                <AddStudentModal
-                    isOpen={addModalOpen}
-                    onClose={() => setAddModalOpen(false)}
-                    groups={groups}
-                    onSubmit={async (data) => {
-                        await apiClient.post("/students", data);
-                        setAddModalOpen(false);
-                        await loadStudents();
-                    }}
-                />
-            </main>
-        </div>
+          <StudentDetailsModal
+            isOpen={detailsModalOpen}
+            student={selectedStudent}
+            onClose={() => setDetailsModalOpen(false)}
+            onDelete={handleDeleteStudent}
+            groups={groups} // ✅ ADD THIS
+            reload={loadStudents} // ✅ ADD THIS
+          />
+          <AddStudentModal
+            isOpen={addModalOpen}
+            onClose={() => setAddModalOpen(false)}
+            groups={groups}
+            onSubmit={async (data) => {
+              await apiClient.post("/students", data);
+              setAddModalOpen(false);
+              await loadStudents();
+            }}
+          />
+        </main>
+      </div>
     );
 }

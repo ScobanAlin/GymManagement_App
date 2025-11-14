@@ -9,6 +9,11 @@ export type Group = {
     id: number;
     name: string;
 };
+type Gym = {
+  id: number;
+  name: string;
+};
+
 
 export default function GroupsPage() {
     const [groups, setGroups] = useState<Group[]>([]);
@@ -17,7 +22,7 @@ export default function GroupsPage() {
     const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
     const [groupStudents, setGroupStudents] = useState([]);
     const [groupClasses, setGroupClasses] = useState([]);
-
+const [gyms, setGyms] = useState<Gym[]>([]);
     const handleDeleteGroup = async (id: number) => {
         try {
             await apiClient.delete(`/groups/${id}`);
@@ -62,33 +67,59 @@ export default function GroupsPage() {
         setDetailsModalOpen(true);
     };
 
+const loadGyms = useCallback(async () => {
+  const res = await apiClient.get("/gyms");
+  setGyms(res.data);
+}, []);
+
+useEffect(() => {
+  loadGyms();
+}, [loadGyms]);
+
     return (
-        <div style={{ display: "flex", minHeight: "100vh" }}>
-            <Sidebar />
-            <main style={{ padding: "1.5rem", flex: 1 }}>
-                <h1>👥 Group Categories</h1>
+      <div style={{ display: "flex", minHeight: "100vh" }}>
+        <Sidebar />
+        <main style={{ padding: "1.5rem", flex: 1 }}>
+          <h1>👥 Group Categories</h1>
 
-                <GroupList
-                    groups={groups}
-                    onAddGroup={handleAddGroupClick}
-                    onSelectGroup={handleSelectGroup}
-                />
+          <GroupList
+            groups={groups}
+            onAddGroup={handleAddGroupClick}
+            onSelectGroup={handleSelectGroup}
+          />
 
-                <AddGroupModal
-                    isOpen={createModalOpen}
-                    onClose={() => setCreateModalOpen(false)}
-                    onSubmit={handleSubmitGroup}
-                />
+          <AddGroupModal
+            isOpen={createModalOpen}
+            onClose={() => setCreateModalOpen(false)}
+            onSubmit={handleSubmitGroup}
+          />
 
-                <GroupDetailsModal
-                    isOpen={detailsModalOpen}
-                    onClose={() => setDetailsModalOpen(false)}
-                    onDelete={handleDeleteGroup}
-                    group={selectedGroup}
-                    students={groupStudents}
-                    classes={groupClasses}
-                />
-            </main>
-        </div>
+          <GroupDetailsModal
+            isOpen={detailsModalOpen}
+            onClose={() => setDetailsModalOpen(false)}
+            onDelete={handleDeleteGroup}
+            group={selectedGroup}
+            students={groupStudents}
+            classes={groupClasses}
+            allGroups={groups} // ✅ REQUIRED
+            gyms={gyms} // ✅ REQUIRED
+            refresh={async () => {
+              // ✅ REQUIRED
+              await loadGroups();
+              if (selectedGroup) {
+                const studentsRes = await apiClient.get(
+                  `/groups/${selectedGroup.id}/students`
+                );
+                setGroupStudents(studentsRes.data);
+
+                const classesRes = await apiClient.get(
+                  `/groups/${selectedGroup.id}/classes`
+                );
+                setGroupClasses(classesRes.data);
+              }
+            }}
+          />
+        </main>
+      </div>
     );
 }
