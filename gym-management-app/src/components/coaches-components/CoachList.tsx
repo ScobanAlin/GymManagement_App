@@ -11,10 +11,17 @@ type Props = {
 
 export default function CoachList({ coaches, type, onActivate, onDelete }: Props) {
     if (coaches.length === 0)
-        return <p style={{ color: "#777" }}>No {type} coaches found.</p>;
+        return (
+            <div className="card-container">
+                <div className="empty-state">
+                    <div className="empty-state-icon">🔍</div>
+                    <p style={{ margin: "0" }}>No {type} coaches found</p>
+                </div>
+            </div>
+        );
 
     return (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
+        <div className="cards-grid">
             {coaches.map(coach => (
                 <CoachCard
                     key={coach.id}

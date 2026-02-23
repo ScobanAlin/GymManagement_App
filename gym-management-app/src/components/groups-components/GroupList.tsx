@@ -10,7 +10,7 @@ type Props = {
 
 export default function GroupList({ groups, onAddGroup, onSelectGroup }: Props) {
     return (
-        <div style={{ marginTop: "1.5rem", display: "flex", flexWrap: "wrap", gap: "1rem" }}>
+        <div className="cards-grid">
             <AddGroupCard onAdd={onAddGroup} />
 
             {groups.map((group) => (

@@ -61,72 +61,81 @@ export default function Register() {
         <>
             <LoginHeader />
             <div className="login-page">
-                <div className="login-box">
-                    <h2>Create Account</h2>
-                    <form onSubmit={handleSubmit}>
-                        <input
-                            type="text"
-                            placeholder="Last Name"
-                            value={lastName}
-                            onChange={(e) => setLastName(e.target.value)}
-                            required
-                        />
-                        <input
-                            type="text"
-                            placeholder="First Name"
-                            value={firstName}
-                            onChange={(e) => setFirstName(e.target.value)}
-                            required
-                        />
-                        <input
-                            type="email"
-                            placeholder="Email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                        <input
-                            type="password"
-                            placeholder="Re-enter Password"
-                            value={password2}
-                            onChange={(e) => setPassword2(e.target.value)}
-                            required
-                        />
-                        <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            style={{
-                                padding: "0.8rem",
-                                borderRadius: "8px",
-                                border: "1px solid #ccc",
-                                fontSize: "1rem",
-                            }}
-                        >
-                            <option value="coach">Coach</option>
-                            <option value="admin">Admin</option>
-                        </select>
+                <div className="auth-shell">
+                    <div className="auth-side-panel">
+                        <h2>Join GymManager</h2>
+                        <p>Create a secure account to manage classes, coaches, students and reports.</p>
+                    </div>
 
-                        <button type="submit" disabled={loading}>
-                            {loading ? "Registering..." : "Register"}
-                        </button>
+                    <div className="login-box">
+                        <h2>Create Account</h2>
+                        <p className="auth-subtitle">Fill in your details to register.</p>
 
-                        {error && <p className="error">{error}</p>}
-                        {success && (
-                            <p style={{ color: "green", marginTop: "0.5rem" }}>
-                                Registration successful! You can now <a href="/login">login</a>.
-                            </p>
-                        )}
-                    </form>
-                    <p className="register-text">
-                        Already have an account? <a href="/login">Login</a>
-                    </p>
+                        <form className="auth-form" onSubmit={handleSubmit}>
+                            <input
+                                className="auth-input"
+                                type="text"
+                                placeholder="Last Name"
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
+                                required
+                            />
+                            <input
+                                className="auth-input"
+                                type="text"
+                                placeholder="First Name"
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
+                                required
+                            />
+                            <input
+                                className="auth-input"
+                                type="email"
+                                placeholder="Email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
+                            <input
+                                className="auth-input"
+                                type="password"
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                            <input
+                                className="auth-input"
+                                type="password"
+                                placeholder="Re-enter Password"
+                                value={password2}
+                                onChange={(e) => setPassword2(e.target.value)}
+                                required
+                            />
+                            <select
+                                className="auth-input"
+                                value={role}
+                                onChange={(e) => setRole(e.target.value)}
+                            >
+                                <option value="coach">Coach</option>
+                                <option value="admin">Admin</option>
+                            </select>
+
+                            <button className="auth-button" type="submit" disabled={loading}>
+                                {loading ? "Registering..." : "Create Account"}
+                            </button>
+
+                            {error && <p className="error">{error}</p>}
+                            {success && (
+                                <p className="success-message">
+                                    ✅ Registration successful! You can now <a href="/login">login</a>.
+                                </p>
+                            )}
+                        </form>
+                        <p className="register-text">
+                            Already have an account? <a href="/login">Login</a>
+                        </p>
+                    </div>
                 </div>
             </div>
         </>

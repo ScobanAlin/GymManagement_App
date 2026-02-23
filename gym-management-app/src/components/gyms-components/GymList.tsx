@@ -12,7 +12,7 @@ type Props = {
 
 export default function GymList({ gyms, onEdit, onDelete, onAdd }: Props) {
     return (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1.5rem" }}>
+        <div className="cards-grid">
             <AddGymCard onAdd={onAdd} />
             {gyms.map((gym) => (
                 <GymCard key={gym.id} gym={gym} onEdit={onEdit} onDelete={onDelete} />

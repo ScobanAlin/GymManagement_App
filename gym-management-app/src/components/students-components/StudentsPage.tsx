@@ -17,124 +17,111 @@ export type Student = {
 };
 
 export type Group = {
-    id: number;
-    name: string;
+  id: number;
+  name: string;
 };
 
 export default function StudentsPage() {
-    const [students, setStudents] = useState<Student[]>([]);
-    const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
-    const [groups, setGroups] = useState<Group[]>([]);
-    const [selectedGroup, setSelectedGroup] = useState<number | "all">("all");
-    const [searchQuery, setSearchQuery] = useState("");
-    const [addModalOpen, setAddModalOpen] = useState(false);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [selectedGroup, setSelectedGroup] = useState<number | "all">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [addModalOpen, setAddModalOpen] = useState(false);
 
-    const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-    const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
-    /** Load all students */
-    const loadStudents = useCallback(async () => {
-        const res = await apiClient.get("/students");
-        setStudents(res.data);
-        setFilteredStudents(res.data);
-    }, []);
+  /** Load all students */
+  const loadStudents = useCallback(async () => {
+    const res = await apiClient.get("/students");
+    setStudents(res.data);
+    setFilteredStudents(res.data);
+  }, []);
 
-    /** Load all groups */
-    const loadGroups = useCallback(async () => {
-        const res = await apiClient.get("/groups");
-        setGroups(res.data);
-    }, []);
+  /** Load all groups */
+  const loadGroups = useCallback(async () => {
+    const res = await apiClient.get("/groups");
+    setGroups(res.data);
+  }, []);
 
-    useEffect(() => {
-        loadStudents();
-        loadGroups();
-    }, [loadStudents, loadGroups]);
+  useEffect(() => {
+    loadStudents();
+    loadGroups();
+  }, [loadStudents, loadGroups]);
 
-    /** Filter logic */
-    useEffect(() => {
-        let list = [...students];
+  /** Filter logic */
+  useEffect(() => {
+    let list = [...students];
 
-        if (selectedGroup !== "all") {
-            apiClient.get(`/groups/${selectedGroup}/students`).then((res) => {
-                let groupStudents = res.data as Student[];
-
-                if (searchQuery.trim()) {
-                    groupStudents = groupStudents.filter((s) =>
-                        `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
-                    );
-                }
-
-                setFilteredStudents(groupStudents);
-            });
-            return;
-        }
+    if (selectedGroup !== "all") {
+      apiClient.get(`/groups/${selectedGroup}/students`).then((res) => {
+        let groupStudents = res.data as Student[];
 
         if (searchQuery.trim()) {
-            list = list.filter((s) =>
-                `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
-            );
+          groupStudents = groupStudents.filter((s) =>
+            `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
+          );
         }
 
-        setFilteredStudents(list);
-    }, [students, selectedGroup, searchQuery]);
+        setFilteredStudents(groupStudents);
+      });
+      return;
+    }
 
-    const handleSelectStudent = async (student: Student) => {
-      const res = await apiClient.get(`/students/${student.id}`);
-      setSelectedStudent(res.data); 
-      setDetailsModalOpen(true);
-    };
+    if (searchQuery.trim()) {
+      list = list.filter((s) =>
+        `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    setFilteredStudents(list);
+  }, [students, selectedGroup, searchQuery]);
+
+  const handleSelectStudent = async (student: Student) => {
+    const res = await apiClient.get(`/students/${student.id}`);
+    setSelectedStudent(res.data);
+    setDetailsModalOpen(true);
+  };
 
 
-    const handleDeleteStudent = async (id: number) => {
-        await apiClient.delete(`/students/${id}`);
-        await loadStudents();
-    };
+  const handleDeleteStudent = async (id: number) => {
+    await apiClient.delete(`/students/${id}`);
+    await loadStudents();
+  };
 
-    return (
-      <div style={{ display: "flex", minHeight: "100vh" }}>
-        <Sidebar />
+  return (
+    <div className="page-layout">
+      <Sidebar />
 
-        <main style={{ padding: "1.5rem", flex: 1 }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "1.5rem",
-            }}
-          >
-            <h1>🧍 Students</h1>
+      <main className="page-content">
+        {/* Page Header */}
+        <div className="page-header">
+          <h1>👥 Students Management</h1>
+          <div className="header-actions">
             <button
               onClick={() => setAddModalOpen(true)}
-              style={{
-                padding: "0.5rem 1rem",
-                background: "#4CAF50",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                marginBottom: "1rem",
-              }}
+              className="btn-primary"
             >
-              ➕ Add Student
+              ➕ Add New Student
             </button>
           </div>
+        </div>
 
-          {/* FILTERS BAR */}
-          <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem" }}>
+        {/* FILTERS BAR */}
+        <div className="filter-bar">
+          <div className="filter-group" style={{ flex: 2 }}>
+            <label>Search by name</label>
             <input
               type="text"
-              placeholder="Search by name..."
+              placeholder="Enter student name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                padding: "0.5rem",
-                flex: 1,
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-              }}
             />
+          </div>
 
+          <div className="filter-group">
+            <label>Filter by group</label>
             <select
               value={selectedGroup}
               onChange={(e) =>
@@ -142,11 +129,6 @@ export default function StudentsPage() {
                   e.target.value === "all" ? "all" : Number(e.target.value)
                 )
               }
-              style={{
-                padding: "0.5rem",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-              }}
             >
               <option value="all">All Groups</option>
               {groups.map((g) => (
@@ -156,31 +138,32 @@ export default function StudentsPage() {
               ))}
             </select>
           </div>
+        </div>
 
-          <StudentList
-            students={filteredStudents}
-            onSelectStudent={handleSelectStudent}
-          />
+        <StudentList
+          students={filteredStudents}
+          onSelectStudent={handleSelectStudent}
+        />
 
-          <StudentDetailsModal
-            isOpen={detailsModalOpen}
-            student={selectedStudent}
-            onClose={() => setDetailsModalOpen(false)}
-            onDelete={handleDeleteStudent}
-            groups={groups} // ✅ ADD THIS
-            reload={loadStudents} // ✅ ADD THIS
-          />
-          <AddStudentModal
-            isOpen={addModalOpen}
-            onClose={() => setAddModalOpen(false)}
-            groups={groups}
-            onSubmit={async (data) => {
-              await apiClient.post("/students", data);
-              setAddModalOpen(false);
-              await loadStudents();
-            }}
-          />
-        </main>
-      </div>
-    );
+        <StudentDetailsModal
+          isOpen={detailsModalOpen}
+          student={selectedStudent}
+          onClose={() => setDetailsModalOpen(false)}
+          onDelete={handleDeleteStudent}
+          groups={groups}
+          reload={loadStudents}
+        />
+        <AddStudentModal
+          isOpen={addModalOpen}
+          onClose={() => setAddModalOpen(false)}
+          groups={groups}
+          onSubmit={async (data) => {
+            await apiClient.post("/students", data);
+            setAddModalOpen(false);
+            await loadStudents();
+          }}
+        />
+      </main>
+    </div>
+  );
 }

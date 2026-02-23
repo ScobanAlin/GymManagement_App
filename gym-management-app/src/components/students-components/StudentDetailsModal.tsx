@@ -74,154 +74,168 @@ export default function StudentDetailsModal({
     };
 
     return (
-        <div
-            style={{
-                position: "fixed",
-                inset: 0,
-                background: "rgba(0,0,0,0.5)",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                zIndex: 1500,
-            }}
-            onClick={onClose}
-        >
+        <div className="modal-overlay" onClick={onClose}>
             <div
+                className="modal-content"
+                style={{ maxWidth: "700px" }}
                 onClick={(e) => e.stopPropagation()}
-                style={{
-                    width: "600px",
-                    background: "white",
-                    borderRadius: "10px",
-                    padding: "1.5rem",
-                }}
             >
-                <h2>
-                    {student.firstName} {student.lastName}
-                </h2>
-
-                {/* ---------- TABS ---------- */}
-                <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
-                    {[
-                        "details",
-                        "assign",
-                        "status",
-                        "reports",
-                        "payments",
-                    ].map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            style={{
-                                padding: "0.4rem 0.7rem",
-                                borderRadius: "6px",
-                                border: "1px solid #ccc",
-                                background: activeTab === tab ? "#4CAF50" : "white",
-                                color: activeTab === tab ? "white" : "black",
-                                cursor: "pointer",
-                            }}
-                        >
-                            {tab === "details" && "👤 Details"}
-                            {tab === "assign" && "🔄 Assign Group"}
-                            {tab === "status" && "❄ Status"}
-                            {tab === "reports" && "📄 Reports"}
-                            {tab === "payments" && "💰 Payments"}
-                        </button>
-                    ))}
+                <div className="modal-header">
+                    <h2>👤 {student.firstName} {student.lastName}</h2>
+                    <button
+                        className="modal-close"
+                        onClick={onClose}
+                    >
+                        ✕
+                    </button>
                 </div>
 
-                {/* ---------- TAB CONTENT ---------- */}
-                {activeTab === "details" && (
-                    <div>
-                        <p>
-                            <strong>CNP:</strong> {student.cnp}
-                        </p>
-                        <p>
-                            <strong>Date of Birth:</strong> {student.dateOfBirth}
-                        </p>
-                        <p>
-                            <strong>Subscription:</strong> {subscriptionType}
-                        </p>
-                        <p>
-                            <strong>Status:</strong> {status}
-                        </p>
-                        <p>
-                            <strong>Group:</strong> {student.groupName || "None"}
-                        </p>
+                <div className="modal-body">
+                    {/* ---------- TABS ---------- */}
+                    <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", borderBottom: "2px solid var(--border-color)" }}>
+                        {[
+                            "details",
+                            "assign",
+                            "status",
+                            "reports",
+                            "payments",
+                        ].map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                style={{
+                                    padding: "0.75rem 1rem",
+                                    borderRadius: "0",
+                                    borderBottom: activeTab === tab ? "3px solid var(--primary-accent)" : "3px solid transparent",
+                                    border: "none",
+                                    background: "transparent",
+                                    color: activeTab === tab ? "var(--primary-accent)" : "var(--text-secondary)",
+                                    cursor: "pointer",
+                                    fontWeight: activeTab === tab ? "600" : "500",
+                                    transition: "all 0.3s ease",
+                                }}
+                            >
+                                {tab === "details" && "👤 Details"}
+                                {tab === "assign" && "🔄 Assign"}
+                                {tab === "status" && "❄️ Status"}
+                                {tab === "reports" && "📄 Reports"}
+                                {tab === "payments" && "💰 Payments"}
+                            </button>
+                        ))}
                     </div>
-                )}
 
-                {activeTab === "assign" && (
-                    <div>
-                        <h3>Assign to another group</h3>
-                        <select
-                            value={groupId ?? ""}
-                            onChange={(e) => setGroupId(Number(e.target.value))}
-                            style={{ padding: "0.5rem", width: "100%" }}
-                        >
-                            <option value="">Select group</option>
-                            {groups.map((g) => (
-                                <option key={g.id} value={g.id}>
-                                    {g.name}
-                                </option>
-                            ))}
-                        </select>
-                        <button onClick={handleAssignGroup} style={buttonPrimary}>
-                            Save
-                        </button>
-                    </div>
-                )}
+                    {/* ---------- TAB CONTENT ---------- */}
+                    {activeTab === "details" && (
+                        <div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                                <div>
+                                    <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", margin: "0 0 0.25rem 0" }}>CNP</p>
+                                    <p style={{ fontWeight: "600", margin: "0 0 1rem 0" }}>{student.cnp}</p>
+                                </div>
+                                <div>
+                                    <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", margin: "0 0 0.25rem 0" }}>Date of Birth</p>
+                                    <p style={{ fontWeight: "600", margin: "0 0 1rem 0" }}>{student.dateOfBirth}</p>
+                                </div>
+                                <div>
+                                    <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", margin: "0 0 0.25rem 0" }}>Subscription</p>
+                                    <p style={{ fontWeight: "600", margin: "0 0 1rem 0" }}>{subscriptionType}</p>
+                                </div>
+                                <div>
+                                    <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", margin: "0 0 0.25rem 0" }}>Status</p>
+                                    <span className={`badge badge-${status === 'active' ? 'success' : 'warning'}`} style={{ marginBottom: "1rem", display: "inline-block" }}>
+                                        {status}
+                                    </span>
+                                </div>
+                                <div style={{ gridColumn: "1 / -1" }}>
+                                    <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", margin: "0 0 0.25rem 0" }}>Group</p>
+                                    <p style={{ fontWeight: "600", margin: "0" }}>{student.groupName || "Not assigned"}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
+                    {activeTab === "assign" && (
+                        <div>
+                            <div className="form-group">
+                                <label>Assign to Group</label>
+                                <select
+                                    value={groupId ?? ""}
+                                    onChange={(e) => setGroupId(Number(e.target.value))}
+                                    style={{ width: "100%" }}
+                                >
+                                    <option value="">Select group</option>
+                                    {groups.map((g) => (
+                                        <option key={g.id} value={g.id}>
+                                            {g.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <button onClick={handleAssignGroup} className="btn-primary">
+                                ✓ Save Assignment
+                            </button>
+                        </div>
+                    )}
 
-                {activeTab === "status" && (
-                    <div>
-                        <h3>Membership Status</h3>
-                        <p>
-                            Current: <strong>{status}</strong>
-                        </p>
-                        <button onClick={handleStatusChange} style={buttonPrimary}>
-                            {status === "active"
-                                ? "Freeze (inactive)"
-                                : "Unfreeze (activate)"}
-                        </button>
-                    </div>
-                )}
+                    {activeTab === "status" && (
+                        <div>
+                            <p style={{ marginBottom: "1.5rem" }}>
+                                Current Status: <span className={`badge badge-${status === 'active' ? 'success' : 'warning'}`}>{status}</span>
+                            </p>
+                            <button onClick={handleStatusChange} className={status === "active" ? "btn-warning" : "btn-success"}>
+                                {status === "active"
+                                    ? "❄️ Freeze Membership"
+                                    : "🔥 Activate Membership"}
+                            </button>
+                        </div>
+                    )}
 
-                {activeTab === "reports" && (
-                    <div>
-                        <h3>Reports</h3>
-                        <p>Future section for attendance, performance, etc.</p>
-                    </div>
-                )}
+                    {activeTab === "reports" && (
+                        <div className="empty-state">
+                            <div className="empty-state-icon">📄</div>
+                            <p>Reports and attendance data coming soon</p>
+                        </div>
+                    )}
 
-                {activeTab === "payments" && (
-                    <div>
-                        <h3>Payments</h3>
-                        {payments.length === 0 ? (
-                            <p>No payments yet.</p>
-                        ) : (
-                            <ul>
-                                {payments.map((p) => (
-                                    <li key={p.id}>
-                                        {p.month} — {p.amount} RON on {p.payment_date}
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-                )}
+                    {activeTab === "payments" && (
+                        <div>
+                            {payments.length === 0 ? (
+                                <div className="empty-state">
+                                    <div className="empty-state-icon">💰</div>
+                                    <p>No payments recorded</p>
+                                </div>
+                            ) : (
+                                <div className="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th style={{ padding: "1rem" }}>Month</th>
+                                                <th style={{ padding: "1rem" }}>Amount</th>
+                                                <th style={{ padding: "1rem" }}>Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {payments.map((p) => (
+                                                <tr key={p.id}>
+                                                    <td style={{ padding: "1rem" }}>{p.month}</td>
+                                                    <td style={{ padding: "1rem", fontWeight: "600" }}>{p.amount} RON</td>
+                                                    <td style={{ padding: "1rem" }}>{p.payment_date}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
 
                 {/* ---------- FOOTER ---------- */}
-                <div
-                    style={{
-                        marginTop: "1.5rem",
-                        display: "flex",
-                        justifyContent: "space-between",
-                    }}
-                >
-                    <button onClick={handleDelete} style={buttonDanger}>
-                        Delete Student
+                <div className="modal-footer">
+                    <button onClick={handleDelete} className="btn-danger btn-sm">
+                        🗑 Delete
                     </button>
-                    <button onClick={onClose} style={buttonPrimary}>
+                    <button onClick={onClose} className="btn-primary">
                         Close
                     </button>
                 </div>
@@ -229,23 +243,3 @@ export default function StudentDetailsModal({
         </div>
     );
 }
-
-/* Button styles */
-const buttonPrimary: React.CSSProperties = {
-    marginTop: "1rem",
-    padding: "0.5rem 1rem",
-    background: "#4CAF50",
-    color: "white",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-};
-
-const buttonDanger: React.CSSProperties = {
-    padding: "0.5rem 1rem",
-    background: "#e74c3c",
-    color: "white",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-};

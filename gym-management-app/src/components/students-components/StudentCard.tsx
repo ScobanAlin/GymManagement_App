@@ -10,20 +10,29 @@ export default function StudentCard({ student, onClick }: Props) {
     return (
         <div
             onClick={onClick}
+            className="card-container"
             style={{
-                padding: "1rem",
-                background: "#fff",
-                borderRadius: "6px",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
                 cursor: "pointer",
-                transition: "background 0.2s ease",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f3f3")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
         >
-            <strong>
+            <h3 style={{ margin: "0 0 0.5rem 0", color: "var(--text-primary)" }}>
                 {student.firstName} {student.lastName}
-            </strong>
+            </h3>
+            {student.cnp && (
+                <p style={{ margin: "0.25rem 0", fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+                    ID: {student.cnp}
+                </p>
+            )}
+            {student.groupName && (
+                <p style={{ margin: "0.25rem 0", fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+                    Group: <span style={{ fontWeight: "600", color: "var(--primary-accent)" }}>{student.groupName}</span>
+                </p>
+            )}
+            {student.status && (
+                <span className={`badge ${student.status === 'active' ? 'badge-success' : 'badge-warning'}`} style={{ marginTop: "0.75rem", display: "inline-block" }}>
+                    {student.status}
+                </span>
+            )}
         </div>
     );
 }

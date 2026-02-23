@@ -12,64 +12,32 @@ export default function CoachCard({ coach, type, onActivate, onDelete }: Props) 
     const fullName = `${coach.first_name} ${coach.last_name}`;
 
     return (
-        <div
-            style={{
-                flex: "1 1 280px",
-                background: "#f9f9f9",
-                borderRadius: "10px",
-                boxShadow: "0 3px 8px rgba(0,0,0,0.1)",
-                padding: "1rem",
-            }}
-        >
-            <h3>{fullName}</h3>
-            <p>📧 {coach.email}</p>
-
-            {type === "inactive" ? (
-                <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
+        <div className="card-container">
+            <div className="card-header">
+                <h3 className="card-title">{fullName}</h3>
+                <span className={`badge ${type === 'active' ? 'badge-success' : 'badge-warning'}`}>
+                    {type === 'active' ? 'Active' : 'Pending'}
+                </span>
+            </div>
+            <div className="card-body">
+                <p style={{ margin: "0", color: "var(--text-secondary)" }}>📧 {coach.email}</p>
+            </div>
+            <div className="card-footer">
+                {type === "inactive" && (
                     <button
                         onClick={() => onActivate(coach.id)}
-                        style={{
-                            background: "#2ecc71",
-                            border: "none",
-                            color: "white",
-                            borderRadius: "6px",
-                            padding: "0.4rem 0.8rem",
-                            cursor: "pointer",
-                        }}
+                        className="btn-success btn-sm"
                     >
-                        Activate
+                        ✓ Activate
                     </button>
-                    <button
-                        onClick={() => onDelete(coach.id)}
-                        style={{
-                            background: "#e74c3c",
-                            border: "none",
-                            color: "white",
-                            borderRadius: "6px",
-                            padding: "0.4rem 0.8rem",
-                            cursor: "pointer",
-                        }}
-                    >
-                        Delete
-                    </button>
-                </div>
-            ) : (
-                <div>
-                    <button
-                        onClick={() => onDelete(coach.id)}
-                        style={{
-                            background: "#e74c3c",
-                            border: "none",
-                            color: "white",
-                            borderRadius: "6px",
-                            padding: "0.4rem 0.8rem",
-                            cursor: "pointer",
-                        }}
-                    >
-                        Delete
-                    </button>
-                </div>
-            )}
+                )}
+                <button
+                    onClick={() => onDelete(coach.id)}
+                    className="btn-danger btn-sm"
+                >
+                    🗑 Delete
+                </button>
+            </div>
         </div>
     );
 }

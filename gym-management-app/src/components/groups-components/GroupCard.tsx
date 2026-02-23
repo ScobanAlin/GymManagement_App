@@ -10,19 +10,19 @@ export default function GroupCard({ group, onClick }: Props) {
     return (
         <div
             onClick={onClick}
+            className="card-container"
             style={{
-                flex: "1 1 250px",
-                background: "#f9f9f9",
-                borderRadius: "10px",
-                boxShadow: "0 3px 8px rgba(0,0,0,0.1)",
-                padding: "1rem",
                 cursor: "pointer",
-                transition: "background 0.2s ease",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: "150px",
+                textAlign: "center"
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f0f0")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#f9f9f9")}
         >
-            <h3 style={{ margin: 0 }}>{group.name}</h3>
+            <h3 style={{ margin: "0" }}>{group.name}</h3>
+            <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.9rem", color: "var(--text-secondary)" }}>Click to view details</p>
         </div>
     );
 }
@@ -35,22 +35,29 @@ export function AddGroupCard({ onAdd }: AddGroupCardProps) {
     return (
         <div
             onClick={onAdd}
+            className="card-container"
             style={{
-                flex: "1 1 250px",
+                cursor: "pointer",
+                textAlign: "center",
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                background: "#e0e0e0",
-                borderRadius: "10px",
-                boxShadow: "0 3px 8px rgba(0,0,0,0.1)",
-                padding: "1rem",
-                cursor: "pointer",
-                transition: "background 0.2s ease",
+                minHeight: "150px",
+                background: "linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)",
+                border: "2px dashed var(--border-color)",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#d0d0d0")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#e0e0e0")}
+            onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "var(--primary-accent)";
+                e.currentTarget.style.background = "linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)";
+            }}
+            onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "var(--border-color)";
+                e.currentTarget.style.background = "linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)";
+            }}
         >
-            <h3>➕ Add Group</h3>
+            <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>➕</div>
+            <h3 style={{ margin: "0", color: "var(--primary-accent)" }}>Create New Group</h3>
         </div>
     );
 }

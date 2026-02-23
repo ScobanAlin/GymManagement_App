@@ -9,6 +9,10 @@ import Groups from "./pages/Groups";
 import Notifications from "./pages/Notifications";
 import Payments from "./pages/Payments";
 import Reports from "./pages/Reports";
+import MyGroups from "./pages/MyGroups";
+import Attendance from "./pages/Attendance";
+import Observations from "./pages/Observations";
+
 export default function App() {
     return (
         <Routes>
@@ -22,6 +26,9 @@ export default function App() {
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/payments" element={<Payments />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/my-groups" element={<MyGroups />} />
+            <Route path="/attendance" element={<Attendance />} />
+            <Route path="/observations" element={<Observations />} />
         </Routes >
     );
 }

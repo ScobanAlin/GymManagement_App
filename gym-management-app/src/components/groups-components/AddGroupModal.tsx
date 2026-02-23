@@ -23,82 +23,34 @@ export default function AddGroupModal({ isOpen, onClose, onSubmit }: AddGroupMod
     };
 
     return (
-        <div
-            style={{
-                position: "fixed",
-                inset: 0,
-                background: "rgba(0,0,0,0.5)",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                zIndex: 1200,
-            }}
-            onClick={handleClose}
-        >
-            {/* Modal box */}
+        <div className="modal-overlay" onClick={handleClose}>
             <div
+                className="modal-content"
                 onClick={(e) => e.stopPropagation()}
-                style={{
-                    width: "400px",
-                    background: "white",
-                    borderRadius: "10px",
-                    padding: "1.5rem",
-                    boxShadow: "0 5px 20px rgba(0,0,0,0.2)",
-                    animation: "fadeIn 0.2s ease",
-                }}
             >
-                <h2 style={{ marginBottom: "1rem" }}>➕ Add New Group</h2>
+                <div className="modal-header">
+                    <h2>➕ Add New Group</h2>
+                    <button className="modal-close" onClick={handleClose}>✕</button>
+                </div>
 
-                <label style={{ display: "block", fontSize: "0.9rem", marginBottom: "0.3rem" }}>
-                    Group Name
-                </label>
-                <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Kids Beginner"
-                    style={{
-                        width: "100%",
-                        padding: "0.5rem",
-                        marginBottom: "1rem",
-                        border: "1px solid #ccc",
-                        borderRadius: "6px",
-                    }}
-                />
+                <div className="modal-body">
+                    <div className="form-group">
+                        <label>Group Name</label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="e.g. Kids Beginner"
+                        />
+                    </div>
+                </div>
 
-                {/* Buttons */}
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        gap: "0.5rem",
-                    }}
-                >
-                    <button
-                        onClick={handleClose}
-                        style={{
-                            background: "#ccc",
-                            border: "none",
-                            padding: "0.5rem 1rem",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                        }}
-                    >
+                <div className="modal-footer">
+                    <button onClick={handleClose} className="btn-secondary">
                         Cancel
                     </button>
-
-                    <button
-                        onClick={handleSubmit}
-                        style={{
-                            background: "#4CAF50",
-                            color: "white",
-                            border: "none",
-                            padding: "0.5rem 1rem",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                        }}
-                    >
-                        Save
+                    <button onClick={handleSubmit} className="btn-primary">
+                        ✓ Save Group
                     </button>
                 </div>
             </div>

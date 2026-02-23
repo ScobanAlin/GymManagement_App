@@ -28,56 +28,58 @@ export default function GymFormModal({ gym, onClose, onSave }: Props) {
     };
 
     return (
-        <div
-            style={{
-                position: "fixed",
-                inset: 0,
-                background: "rgba(0,0,0,0.5)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-            }}
-        >
+        <div className="modal-overlay" onClick={onClose}>
             <form
                 onSubmit={handleSubmit}
-                style={{
-                    background: "#fff",
-                    padding: "2rem",
-                    borderRadius: "10px",
-                    width: "350px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.8rem",
-                }}
+                className="modal-content"
+                onClick={(e) => e.stopPropagation()}
             >
-                <h2>{gym ? "Edit Gym" : "Add New Gym"}</h2>
-                <input
-                    type="text"
-                    placeholder="Name"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    required
-                />
-                <input
-                    type="text"
-                    placeholder="Location"
-                    value={form.location}
-                    onChange={(e) => setForm({ ...form, location: e.target.value })}
-                    required
-                />
-                <input
-                    type="number"
-                    placeholder="Capacity"
-                    value={form.capacity}
-                    onChange={(e) => setForm({ ...form, capacity: e.target.value })}
-                    required
-                />
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <button type="submit" style={{ background: "#007bff", color: "white" }}>
-                        💾 Save
-                    </button>
-                    <button type="button" onClick={onClose} style={{ background: "#ccc", color: "black" }}>
+                <div className="modal-header">
+                    <h2>{gym ? "✏️ Edit Gym" : "➕ Add New Gym"}</h2>
+                    <button type="button" className="modal-close" onClick={onClose}>✕</button>
+                </div>
+
+                <div className="modal-body">
+                    <div className="form-group">
+                        <label>Gym Name</label>
+                        <input
+                            type="text"
+                            placeholder="e.g. Downtown Fitness"
+                            value={form.name}
+                            onChange={(e) => setForm({ ...form, name: e.target.value })}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Location</label>
+                        <input
+                            type="text"
+                            placeholder="e.g. 123 Main Street"
+                            value={form.location}
+                            onChange={(e) => setForm({ ...form, location: e.target.value })}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Capacity</label>
+                        <input
+                            type="number"
+                            placeholder="e.g. 50"
+                            value={form.capacity}
+                            onChange={(e) => setForm({ ...form, capacity: e.target.value })}
+                            required
+                        />
+                    </div>
+                </div>
+
+                <div className="modal-footer">
+                    <button type="button" onClick={onClose} className="btn-secondary">
                         Cancel
+                    </button>
+                    <button type="submit" className="btn-primary">
+                        ✓ {gym ? "Update" : "Create"} Gym
                     </button>
                 </div>
             </form>

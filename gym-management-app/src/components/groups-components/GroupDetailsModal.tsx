@@ -50,6 +50,18 @@ export default function GroupDetailsModal({
   const [newClassDate, setNewClassDate] = useState("");
   const [newClassBegin, setNewClassBegin] = useState("");
   const [newClassEnd, setNewClassEnd] = useState("");
+  const [newClassWeeks, setNewClassWeeks] = useState("52");
+  const currentYear = new Date().getFullYear().toString();
+  const initialStartDate = new Date(Number(currentYear), 0, 1);
+  const initialEndDate = new Date(Number(currentYear), 11, 31);
+  const [filterYear, setFilterYear] = useState(currentYear);
+  const [filterMonth, setFilterMonth] = useState("");
+  const [filterDay, setFilterDay] = useState("");
+  const [filterError, setFilterError] = useState<string | null>(null);
+  const [classFilterRange, setClassFilterRange] = useState<{ startDate: Date; endDate: Date } | null>({
+    startDate: initialStartDate,
+    endDate: initialEndDate,
+  });
 
   if (!isOpen || !group) return null;
 
@@ -58,29 +70,94 @@ export default function GroupDetailsModal({
     await apiClient.delete(`/groups/${group.id}/remove-student/${studentId}`);
     refresh();
   };
-const assignStudent = async (studentId: number) => {
-  if (!selectedGroupForReassign) return alert("Select a group first");
-        ///todo , look for name in database to see id 
-  await apiClient.post(`/students/${studentId}/assign-group`, {
-    groupId: group.id,
-  });
+  const assignStudent = async (studentId: number) => {
+    if (!selectedGroupForReassign) return alert("Select a group first");
+    ///todo , look for name in database to see id 
+    await apiClient.post(`/students/${studentId}/assign-group`, {
+      groupId: group.id,
+    });
 
-  refresh();
-};
+    refresh();
+  };
 
 
   const addClass = async () => {
     if (!newClassGym || !newClassDate || !newClassBegin || !newClassEnd)
       return alert("Fill all fields");
 
+    const recurrenceWeeks = Number(newClassWeeks);
+    if (!Number.isFinite(recurrenceWeeks) || recurrenceWeeks <= 0) {
+      return alert("Recurrence weeks must be a positive number");
+    }
+
     await apiClient.post(`/groups/${group.id}/classes`, {
       gymId: newClassGym,
       date: newClassDate,
       begin: newClassBegin,
       end: newClassEnd,
+      recurrenceWeeks,
     });
 
     refresh();
+  };
+
+  const resetClassFilters = () => {
+    setFilterYear(currentYear);
+    setFilterMonth("");
+    setFilterDay("");
+    setFilterError(null);
+    setClassFilterRange({ startDate: initialStartDate, endDate: initialEndDate });
+  };
+
+  const buildClassFilterRange = () => {
+    const year = Number(filterYear);
+    const month = filterMonth ? Number(filterMonth) : null;
+    const day = filterDay ? Number(filterDay) : null;
+
+    if (!filterYear || Number.isNaN(year) || year < 1900) {
+      return { error: "Please enter a valid year" };
+    }
+
+    if (day !== null && month === null) {
+      return { error: "Please enter a month when filtering by day" };
+    }
+
+    if (month !== null && (month < 1 || month > 12)) {
+      return { error: "Month must be between 1 and 12" };
+    }
+
+    if (day !== null && (day < 1 || day > 31)) {
+      return { error: "Day must be between 1 and 31" };
+    }
+
+    let startDate: Date;
+    let endDate: Date;
+
+    if (month === null) {
+      startDate = new Date(year, 0, 1);
+      endDate = new Date(year, 11, 31);
+    } else if (day === null) {
+      startDate = new Date(year, month - 1, 1);
+      endDate = new Date(year, month, 0);
+    } else {
+      startDate = new Date(year, month - 1, day);
+      endDate = new Date(year, month - 1, day);
+    }
+
+    return { startDate, endDate };
+  };
+
+  const applyClassFilters = () => {
+    const result = buildClassFilterRange();
+    if (result?.error) {
+      setFilterError(result.error);
+      return;
+    }
+
+    if (result?.startDate && result?.endDate) {
+      setFilterError(null);
+      setClassFilterRange({ startDate: result.startDate, endDate: result.endDate });
+    }
   };
 
 
@@ -98,100 +175,73 @@ const assignStudent = async (studentId: number) => {
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.5)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 2000,
-      }}
-      onClick={onClose}
-    >
+    <div className="modal-overlay" onClick={onClose}>
       <div
+        className="modal-content"
+        style={{ maxWidth: "700px" }}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "700px",
-          background: "white",
-          borderRadius: "12px",
-          padding: "1.5rem",
-          boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
-        }}
       >
-        {/* HEADER */}
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <h2 style={{ margin: 0 }}>📘 {group.name}</h2>
-
-          <button
-            onClick={handleDeleteGroup}
-            style={{
-              background: "#d9534f",
-              border: "none",
-              color: "white",
-              borderRadius: "6px",
-              padding: "0.4rem 0.8rem",
-              cursor: "pointer",
-            }}
-          >
-            Delete Group
-          </button>
+        <div className="modal-header">
+          <h2>📘 {group.name}</h2>
+          <button className="modal-close" onClick={handleDeleteGroup}>🗑</button>
         </div>
 
         {/* TABS */}
-        <div
-          style={{ display: "flex", marginTop: "1rem", marginBottom: "1rem" }}
-        >
+        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", borderBottom: "2px solid var(--border-color)" }}>
           <TabButton
             active={activeTab === "students"}
-            label="Students"
+            label="👥 Students"
             onClick={() => setActiveTab("students")}
           />
           <TabButton
             active={activeTab === "classes"}
-            label="Classes"
+            label="📅 Classes"
             onClick={() => setActiveTab("classes")}
           />
         </div>
 
-        {/* STUDENTS TAB */}
-        {activeTab === "students" && (
-          <StudentsTab
-            students={students}
-            allGroups={allGroups}
-            removeStudent={removeStudent}
-            assignStudent={assignStudent}
-            setSelectedGroupForReassign={setSelectedGroupForReassign}
-          />
-        )}
+        <div className="modal-body">
+          {/* STUDENTS TAB */}
+          {activeTab === "students" && (
+            <StudentsTab
+              students={students}
+              allGroups={allGroups}
+              removeStudent={removeStudent}
+              assignStudent={assignStudent}
+              setSelectedGroupForReassign={setSelectedGroupForReassign}
+            />
+          )}
 
-        {/* CLASSES TAB */}
-        {activeTab === "classes" && (
-          <ClassesTab
-            classes={classes}
-            gyms={gyms}
-            deleteClass={deleteClass}
-            setNewClassDate={setNewClassDate}
-            setNewClassBegin={setNewClassBegin}
-            setNewClassEnd={setNewClassEnd}
-            setNewClassGym={setNewClassGym}
-            addClass={addClass}
-          />
-        )}
+          {/* CLASSES TAB */}
+          {activeTab === "classes" && (
+            <ClassesTab
+              classes={classes}
+              gyms={gyms}
+              deleteClass={deleteClass}
+              setNewClassDate={setNewClassDate}
+              setNewClassBegin={setNewClassBegin}
+              setNewClassEnd={setNewClassEnd}
+              setNewClassGym={setNewClassGym}
+              newClassWeeks={newClassWeeks}
+              setNewClassWeeks={setNewClassWeeks}
+              addClass={addClass}
+              filterYear={filterYear}
+              filterMonth={filterMonth}
+              filterDay={filterDay}
+              filterError={filterError}
+              setFilterYear={setFilterYear}
+              setFilterMonth={setFilterMonth}
+              setFilterDay={setFilterDay}
+              applyClassFilters={applyClassFilters}
+              resetClassFilters={resetClassFilters}
+              classFilterRange={classFilterRange}
+            />
+          )}
+        </div>
 
         {/* FOOTER */}
-        <div style={{ textAlign: "right", marginTop: "1.5rem" }}>
-          <button
-            onClick={onClose}
-            style={{
-              background: "#4CAF50",
-              color: "white",
-              border: "none",
-              padding: "0.6rem 1.2rem",
-              borderRadius: "6px",
-            }}
-          >
+        <div className="modal-footer">
+          <button onClick={onClose} className="btn-primary">
             Close
           </button>
         </div>
@@ -205,14 +255,15 @@ const TabButton = ({ active, label, onClick }: any) => (
   <button
     onClick={onClick}
     style={{
-      flex: 1,
-      padding: "0.7rem",
-      background: active ? "#4CAF50" : "#f0f0f0",
-      color: active ? "white" : "#555",
+      padding: "0.75rem 1rem",
+      borderRadius: "0",
+      borderBottom: active ? "3px solid var(--primary-accent)" : "3px solid transparent",
       border: "none",
-      borderBottom: active ? "3px solid #398f3b" : "3px solid transparent",
+      background: "transparent",
+      color: active ? "var(--primary-accent)" : "var(--text-secondary)",
       cursor: "pointer",
-      fontWeight: 500,
+      fontWeight: active ? "600" : "500",
+      transition: "all 0.3s ease",
     }}
   >
     {label}
@@ -227,50 +278,67 @@ const StudentsTab = ({
   setSelectedGroupForReassign,
 }: any) => (
   <div>
-    <h3>Students</h3>
-    <div style={{ marginTop: "1rem" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+    <h3 style={{ marginTop: 0, marginBottom: "1rem", color: "var(--text-primary)" }}>
+      Manage Students
+    </h3>
+    <div className="table-container">
+      <table>
         <thead>
-          <tr style={{ background: "#f7f7f7", textAlign: "left" }}>
-            <th style={th}>Name</th>
-            <th style={th}>Actions</th>
+          <tr>
+            <th style={{ padding: "1rem" }}>Name</th>
+            <th style={{ padding: "1rem" }}>Actions</th>
           </tr>
         </thead>
 
         <tbody>
-          {students.map((s: any) => (
-            <tr key={s.id} style={tr}>
-              <td style={td}>
-                {s.firstName} {s.lastName}
-              </td>
-              <td style={td}>
-                <button style={dangerBtn} onClick={() => removeStudent(s.id)}>
-                  Remove
-                </button>
-
-                <select
-                  style={select}
-                  onChange={(e) =>
-                    setSelectedGroupForReassign(Number(e.target.value))
-                  }
-                >
-                  <option value="">Reassign…</option>
-                  {allGroups.map((g: any) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
-                  ))}
-                </select>
-
-                <button
-                  style={secondaryBtn}
-                  onClick={() => assignStudent(s.id)}
-                >
-                  Apply
-                </button>
+          {students.length === 0 ? (
+            <tr>
+              <td colSpan={2} style={{ padding: "1rem", textAlign: "center", color: "var(--text-secondary)" }}>
+                No students in this group
               </td>
             </tr>
-          ))}
+          ) : (
+            students.map((s: any) => (
+              <tr key={s.id}>
+                <td style={{ padding: "1rem" }}>
+                  {s.firstName} {s.lastName}
+                </td>
+                <td style={{ padding: "1rem" }}>
+                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                    <button className="btn-danger btn-sm" onClick={() => removeStudent(s.id)}>
+                      Remove
+                    </button>
+
+                    <select
+                      onChange={(e) =>
+                        setSelectedGroupForReassign(Number(e.target.value))
+                      }
+                      style={{
+                        padding: "0.4rem",
+                        border: "1px solid var(--border-color)",
+                        borderRadius: "6px",
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      <option value="">Move to…</option>
+                      {allGroups.map((g: any) => (
+                        <option key={g.id} value={g.id}>
+                          {g.name}
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      className="btn-secondary btn-sm"
+                      onClick={() => assignStudent(s.id)}
+                    >
+                      Move
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
@@ -285,132 +353,204 @@ const ClassesTab = ({
   setNewClassDate,
   setNewClassBegin,
   setNewClassEnd,
+  newClassWeeks,
+  setNewClassWeeks,
   addClass,
+  filterYear,
+  filterMonth,
+  filterDay,
+  filterError,
+  setFilterYear,
+  setFilterMonth,
+  setFilterDay,
+  applyClassFilters,
+  resetClassFilters,
+  classFilterRange,
 }: any) => (
   <div>
-    <h3>Classes</h3>
+    <h3 style={{ marginTop: 0, marginBottom: "1rem", color: "var(--text-primary)" }}>
+      Scheduled Classes
+    </h3>
+    <div style={{ marginTop: "0.5rem", padding: "1.5rem", background: "var(--bg-secondary)", borderRadius: "8px" }}>
+      <h4 style={{ marginTop: 0, marginBottom: "1rem", color: "var(--text-primary)" }}>➕ Add New Class</h4>
+      <p style={{ marginTop: 0, marginBottom: "1rem", color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+        This class will be created as a weekly recurring schedule (same day/time each week).
+      </p>
 
-    <table
-      style={{ width: "100%", borderCollapse: "collapse", marginTop: "1rem" }}
-    >
-      <thead>
-        <tr style={{ background: "#f7f7f7" }}>
-          <th style={th}>Date</th>
-          <th style={th}>Time</th>
-          <th style={th}>Gym</th>
-          <th style={th}>Actions</th>
-        </tr>
-      </thead>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "0.75rem" }}>
+        <select
+          onChange={(e) => setNewClassGym(Number(e.target.value))}
+          style={{
+            padding: "0.6rem",
+            border: "1px solid var(--border-color)",
+            borderRadius: "6px",
+            fontSize: "0.9rem",
+          }}
+        >
+          <option value="">Select Gym</option>
+          {gyms.map((g: any) => (
+            <option key={g.id} value={g.id}>
+              {g.name}
+            </option>
+          ))}
+        </select>
 
-      <tbody>
-        {classes.map((c: any) => (
-          <tr key={c.id} style={tr}>
-            <td style={td}>{c.date}</td>
-            <td style={td}>
-              {c.begin}–{c.end}
-            </td>
-            <td style={td}>{c.gymName}</td>
-            <td style={td}>
-              <button style={dangerBtn} onClick={() => deleteClass(c.id)}>
-                Delete
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+        <input
+          type="date"
+          onChange={(e) => setNewClassDate(e.target.value)}
+          style={{
+            padding: "0.6rem",
+            border: "1px solid var(--border-color)",
+            borderRadius: "6px",
+            fontSize: "0.9rem",
+          }}
+        />
+        <input
+          type="time"
+          onChange={(e) => setNewClassBegin(e.target.value)}
+          style={{
+            padding: "0.6rem",
+            border: "1px solid var(--border-color)",
+            borderRadius: "6px",
+            fontSize: "0.9rem",
+          }}
+        />
+        <input
+          type="time"
+          onChange={(e) => setNewClassEnd(e.target.value)}
+          style={{
+            padding: "0.6rem",
+            border: "1px solid var(--border-color)",
+            borderRadius: "6px",
+            fontSize: "0.9rem",
+          }}
+        />
+      </div>
 
-    <h4 style={{ marginTop: "1.5rem" }}>Add Class</h4>
+      <div style={{ marginTop: "0.75rem" }}>
+        <input
+          type="number"
+          min={1}
+          value={newClassWeeks}
+          onChange={(e) => setNewClassWeeks(e.target.value)}
+          placeholder="Recurrence weeks"
+          style={{
+            padding: "0.6rem",
+            border: "1px solid var(--border-color)",
+            borderRadius: "6px",
+            fontSize: "0.9rem",
+            width: "180px",
+          }}
+        />
+        <span style={{ marginLeft: "0.5rem", color: "var(--text-secondary)", fontSize: "0.85rem" }}>
+          weeks
+        </span>
+      </div>
 
-    <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
-      <select
-        style={select}
-        onChange={(e) => setNewClassGym(Number(e.target.value))}
-      >
-        <option value="">Gym</option>
-        {gyms.map((g: any) => (
-          <option key={g.id} value={g.id}>
-            {g.name}
-          </option>
-        ))}
-      </select>
-
-      <input
-        type="date"
-        style={input}
-        onChange={(e) => setNewClassDate(e.target.value)}
-      />
-      <input
-        type="time"
-        style={input}
-        onChange={(e) => setNewClassBegin(e.target.value)}
-      />
-      <input
-        type="time"
-        style={input}
-        onChange={(e) => setNewClassEnd(e.target.value)}
-      />
-
-      <button style={primaryBtn} onClick={addClass}>
-        Add
+      <button className="btn-primary" onClick={addClass} style={{ marginTop: "1rem" }}>
+        ✓ Add Class
       </button>
+    </div>
+
+    <div className="card-container" style={{ marginTop: "1.5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem" }}>
+        <input
+          type="number"
+          inputMode="numeric"
+          value={filterYear}
+          onChange={(e) => setFilterYear(e.target.value)}
+          placeholder="Year (e.g. 2026)"
+          style={{
+            padding: "0.6rem",
+            borderRadius: "8px",
+            border: "1px solid var(--border-color)",
+            fontFamily: "inherit",
+            fontSize: "0.9rem",
+          }}
+        />
+        <input
+          type="number"
+          inputMode="numeric"
+          value={filterMonth}
+          onChange={(e) => setFilterMonth(e.target.value)}
+          placeholder="Month (1-12)"
+          style={{
+            padding: "0.6rem",
+            borderRadius: "8px",
+            border: "1px solid var(--border-color)",
+            fontFamily: "inherit",
+            fontSize: "0.9rem",
+          }}
+        />
+        <input
+          type="number"
+          inputMode="numeric"
+          value={filterDay}
+          onChange={(e) => setFilterDay(e.target.value)}
+          placeholder="Day (1-31)"
+          style={{
+            padding: "0.6rem",
+            borderRadius: "8px",
+            border: "1px solid var(--border-color)",
+            fontFamily: "inherit",
+            fontSize: "0.9rem",
+          }}
+        />
+      </div>
+      <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
+        <button className="btn-primary" onClick={applyClassFilters}>Search</button>
+        <button className="btn-secondary" onClick={resetClassFilters}>Reset</button>
+      </div>
+      <p style={{ margin: "0.75rem 0 0", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+        Leave month/day empty to show the full year. Leave day empty to show the entire month.
+      </p>
+      {filterError && (
+        <p style={{ margin: "0.75rem 0 0", color: "#c0392b", fontSize: "0.85rem" }}>{filterError}</p>
+      )}
+    </div>
+
+    <div className="table-container" style={{ marginTop: "1.5rem" }}>
+      <table>
+        <thead>
+          <tr>
+            <th style={{ padding: "1rem" }}>Date</th>
+            <th style={{ padding: "1rem" }}>Time</th>
+            <th style={{ padding: "1rem" }}>Gym</th>
+            <th style={{ padding: "1rem" }}>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {classes.length === 0 ? (
+            <tr>
+              <td colSpan={4} style={{ padding: "1rem", textAlign: "center", color: "var(--text-secondary)" }}>
+                No classes scheduled
+              </td>
+            </tr>
+          ) : (
+            classes
+              .filter((c: any) => {
+                if (!classFilterRange) return true;
+                const classDate = new Date(c.date);
+                return classDate >= classFilterRange.startDate && classDate <= classFilterRange.endDate;
+              })
+              .map((c: any) => (
+                <tr key={c.id}>
+                  <td style={{ padding: "1rem" }}>{c.date}</td>
+                  <td style={{ padding: "1rem" }}>
+                    {c.begin}–{c.end}
+                  </td>
+                  <td style={{ padding: "1rem" }}>{c.gymName}</td>
+                  <td style={{ padding: "1rem" }}>
+                    <button className="btn-danger btn-sm" onClick={() => deleteClass(c.id)}>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+          )}
+        </tbody>
+      </table>
     </div>
   </div>
 );
-
-// STYLE HELPERS
-const th: React.CSSProperties = {
-  padding: "0.7rem",
-  fontWeight: 600,
-  borderBottom: "1px solid #ddd",
-};
-
-const tr: React.CSSProperties = {
-  borderBottom: "1px solid #eee",
-};
-
-const td: React.CSSProperties = {
-  padding: "0.7rem",
-};
-
-const input: React.CSSProperties = {
-  padding: "0.4rem",
-  border: "1px solid #ccc",
-  borderRadius: "6px",
-  width: "100%",
-};
-
-const select: React.CSSProperties = {
-  padding: "0.4rem",
-  border: "1px solid #ccc",
-  borderRadius: "6px",
-};
-
-const primaryBtn: React.CSSProperties = {
-  background: "#4CAF50",
-  border: "none",
-  color: "white",
-  padding: "0.45rem 0.8rem",
-  borderRadius: "6px",
-  cursor: "pointer",
-};
-
-const secondaryBtn: React.CSSProperties = {
-  background: "#5bc0de",
-  border: "none",
-  color: "white",
-  padding: "0.4rem 0.7rem",
-  borderRadius: "6px",
-  marginLeft: "0.3rem",
-  cursor: "pointer",
-};
-
-const dangerBtn: React.CSSProperties = {
-  background: "#d9534f",
-  border: "none",
-  color: "white",
-  padding: "0.4rem 0.7rem",
-  borderRadius: "6px",
-  cursor: "pointer",
-  marginRight: "0.3rem",
-};

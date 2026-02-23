@@ -42,31 +42,42 @@ export default function Login() {
     <>
       <LoginHeader />
       <div className="login-page">
-        <div className="login-box">
-          <h2>Login</h2>
-          <form onSubmit={handleSubmit}>
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <button type="submit" disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
-            </button>
-            {error && <p className="error">{error}</p>}
-          </form>
-          <p className="register-text">
-            Don’t have an account? <a href="/register">Register</a>
-          </p>
+        <div className="auth-shell">
+          <div className="auth-side-panel">
+            <h2>Welcome back</h2>
+            <p>Access your gym dashboard, manage students, payments and reports in one place.</p>
+          </div>
+
+          <div className="login-box">
+            <h2>Sign In</h2>
+            <p className="auth-subtitle">Use your account credentials to continue.</p>
+
+            <form className="auth-form" onSubmit={handleSubmit}>
+              <input
+                className="auth-input"
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <input
+                className="auth-input"
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button className="auth-button" type="submit" disabled={loading}>
+                {loading ? "Logging in..." : "Login"}
+              </button>
+              {error && <p className="error">{error}</p>}
+            </form>
+            <p className="register-text">
+              Don’t have an account? <a href="/register">Register</a>
+            </p>
+          </div>
         </div>
       </div>
     </>

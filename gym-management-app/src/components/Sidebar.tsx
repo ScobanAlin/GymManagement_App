@@ -10,6 +10,7 @@ export default function Sidebar() {
     { to: "/home", icon: "🏠", label: "Home" },
     { to: "/students", icon: "👩‍🎓", label: "Students" },
     { to: "/groups", icon: "💪", label: "Groups" },
+    { to: "/attendance", icon: "🗓️", label: "Attendance" },
     { to: "/coaches", icon: "🧑‍🏫", label: "Coaches" },
     { to: "/gyms", icon: "🏋️‍♀️", label: "Gyms" },
     { to: "/payments", icon: "💳", label: "Payments" },

@@ -12,24 +12,19 @@ type AddGymCardProps = {
 
 export default function GymCard({ gym, onEdit, onDelete }: Props) {
     return (
-        <div
-            style={{
-                flex: "1 1 280px",
-                background: "#f9f9f9",
-                borderRadius: "10px",
-                boxShadow: "0 3px 8px rgba(0,0,0,0.1)",
-                padding: "1rem",
-            }}
-        >
-            <h2>{gym.name}</h2>
-            <p>📍 {gym.location}</p>
-            <p>🏋️ Capacity: {gym.capacity}</p>
-            <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-                <button onClick={() => onEdit(gym)}>✏️ Edit</button>
-                <button
-                    onClick={() => onDelete(gym.id)}
-                    style={{ color: "red", border: "none", background: "none", cursor: "pointer" }}
-                >
+        <div className="card-container">
+            <div className="card-header">
+                <h3 className="card-title">{gym.name}</h3>
+            </div>
+            <div className="card-body">
+                <p style={{ margin: "0.5rem 0", color: "var(--text-secondary)" }}>📍 Location: {gym.location}</p>
+                <p style={{ margin: "0.5rem 0", color: "var(--text-secondary)" }}>💪 Capacity: {gym.capacity}</p>
+            </div>
+            <div className="card-footer">
+                <button onClick={() => onEdit(gym)} className="btn-primary btn-sm">
+                    ✏️ Edit
+                </button>
+                <button onClick={() => onDelete(gym.id)} className="btn-danger btn-sm">
                     🗑 Delete
                 </button>
             </div>
@@ -41,22 +36,29 @@ export function AddGymCard({ onAdd }: AddGymCardProps) {
     return (
         <div
             onClick={onAdd}
+            className="card-container"
             style={{
-                flex: "1 1 280px",
+                cursor: "pointer",
+                textAlign: "center",
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                background: "#e0e0e0",
-                borderRadius: "10px",
-                boxShadow: "0 3px 8px rgba(0,0,0,0.1)",
-                padding: "1rem",
-                cursor: "pointer",
-                transition: "background 0.2s ease",
+                minHeight: "200px",
+                background: "linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)",
+                border: "2px dashed var(--border-color)",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#d0d0d0")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#e0e0e0")}
+            onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "var(--primary-accent)";
+                e.currentTarget.style.background = "linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)";
+            }}
+            onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "var(--border-color)";
+                e.currentTarget.style.background = "linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)";
+            }}
         >
-            <h2>➕ Add New Gym</h2>
+            <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>➕</div>
+            <h3 style={{ margin: "0", color: "var(--primary-accent)" }}>Add New Gym</h3>
         </div>
     );
 }

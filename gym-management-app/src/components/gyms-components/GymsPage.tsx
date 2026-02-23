@@ -49,10 +49,17 @@ export default function GymsPage() {
     };
 
     return (
-        <div style={{ display: "flex", minHeight: "100vh" }}>
+        <div className="page-layout">
             <Sidebar />
-            <main style={{ padding: "1.5rem", flex: 1 }}>
-                <h1>🏋️‍♂️ Gyms</h1>
+            <main className="page-content">
+                <div className="page-header">
+                    <h1>🏋️‍♂️ Gyms Management</h1>
+                    <div className="header-actions">
+                        <button className="btn-primary" onClick={() => setShowForm(true)}>
+                            ➕ Add New Gym
+                        </button>
+                    </div>
+                </div>
                 <GymList gyms={gyms} onEdit={setEditGym} onDelete={handleDelete} onAdd={() => setShowForm(true)} />
             </main>
 
