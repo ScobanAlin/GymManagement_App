@@ -2,31 +2,28 @@ import React from "react";
 import { Gym } from "./GymsPage";
 type Props = {
     gym: Gym;
-    onEdit: (gym: Gym) => void;
-    onDelete: (id: number) => void;
+    onOpen: (gym: Gym) => void;
 };
 
 type AddGymCardProps = {
     onAdd: () => void;
 };
 
-export default function GymCard({ gym, onEdit, onDelete }: Props) {
+export default function GymCard({ gym, onOpen }: Props) {
     return (
-        <div className="card-container">
+        <div
+            className="card-container"
+            onClick={() => onOpen(gym)}
+            style={{ cursor: "pointer" }}
+            onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.12)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.boxShadow = ""; }}
+        >
             <div className="card-header">
                 <h3 className="card-title">{gym.name}</h3>
             </div>
             <div className="card-body">
-                <p style={{ margin: "0.5rem 0", color: "var(--text-secondary)" }}>📍 Location: {gym.location}</p>
+                <p style={{ margin: "0.5rem 0", color: "var(--text-secondary)" }}>📍 {gym.location}</p>
                 <p style={{ margin: "0.5rem 0", color: "var(--text-secondary)" }}>💪 Capacity: {gym.capacity}</p>
-            </div>
-            <div className="card-footer">
-                <button onClick={() => onEdit(gym)} className="btn-primary btn-sm">
-                    ✏️ Edit
-                </button>
-                <button onClick={() => onDelete(gym.id)} className="btn-danger btn-sm">
-                    🗑 Delete
-                </button>
             </div>
         </div>
     );

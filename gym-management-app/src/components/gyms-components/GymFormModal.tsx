@@ -8,13 +8,17 @@ type Props = {
 };
 
 export default function GymFormModal({ gym, onClose, onSave }: Props) {
-    const [form, setForm] = useState({ name: "", location: "", capacity: "" });
+    const [form, setForm] = useState({
+        name: gym?.name ?? "",
+        location: gym?.location ?? "",
+        capacity: gym?.capacity?.toString() ?? "",
+    });
 
     useEffect(() => {
-        if (gym) setForm({
-            name: gym.name,
-            location: gym.location,
-            capacity: gym.capacity.toString(),
+        setForm({
+            name: gym?.name ?? "",
+            location: gym?.location ?? "",
+            capacity: gym?.capacity?.toString() ?? "",
         });
     }, [gym]);
 

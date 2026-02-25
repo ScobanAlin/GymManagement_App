@@ -124,18 +124,28 @@ export default function HomePage() {
         return date.toLocaleString();
     };
 
-    const handleToggleRead = async (notification: NotificationItem) => {
+    const markNotificationAsRead = async (notification: NotificationItem) => {
+        if (notification.isRead) return { ...notification, isRead: true };
+
         try {
-            const nextReadState = !notification.isRead;
             await apiClient.put(`/notifications/${notification.id}/read`, {
-                isRead: nextReadState,
+                isRead: true,
             });
-            setSelectedNotification({ ...notification, isRead: nextReadState });
+
+            const updated = { ...notification, isRead: true };
+            setSelectedNotification(updated);
             await fetchNotifications();
+            return updated;
         } catch (error) {
             console.error("Error updating notification:", error);
             alert("Failed to update notification");
+            return notification;
         }
+    };
+
+    const openNotificationModal = async (notification: NotificationItem) => {
+        const updated = await markNotificationAsRead(notification);
+        setSelectedNotification(updated);
     };
 
     const handleDelete = async (notification: NotificationItem) => {
@@ -400,10 +410,10 @@ export default function HomePage() {
                                         key={notification.id}
                                         role="button"
                                         tabIndex={0}
-                                        onClick={() => setSelectedNotification(notification)}
+                                        onClick={() => openNotificationModal(notification)}
                                         onKeyDown={(event) => {
                                             if (event.key === "Enter" || event.key === " ") {
-                                                setSelectedNotification(notification);
+                                                openNotificationModal(notification);
                                             }
                                         }}
                                         style={{
@@ -477,7 +487,10 @@ export default function HomePage() {
                                 <h2 style={{ margin: 0, color: "#2c3e50" }}>Notification Details</h2>
                                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end" }}>
                                     <button
-                                        onClick={() => handleToggleRead(selectedNotification)}
+                                        onClick={async () => {
+                                            const updated = await markNotificationAsRead(selectedNotification);
+                                            setSelectedNotification(updated);
+                                        }}
                                         style={{
                                             backgroundColor: selectedNotification.isRead ? "#3498db" : "#27ae60",
                                             color: "white",
@@ -488,7 +501,7 @@ export default function HomePage() {
                                             fontWeight: 600,
                                         }}
                                     >
-                                        {selectedNotification.isRead ? "Mark Unread" : "Mark Read"}
+                                        Mark Read
                                     </button>
                                     <button
                                         onClick={() => handleDelete(selectedNotification)}

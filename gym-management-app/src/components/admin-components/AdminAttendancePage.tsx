@@ -37,6 +37,7 @@ export default function AdminAttendancePage() {
     const [filterYear, setFilterYear] = useState(currentYear);
     const [filterMonth, setFilterMonth] = useState("");
     const [filterDay, setFilterDay] = useState("");
+    const [filterGroup, setFilterGroup] = useState("");
 
     useEffect(() => {
         const startDate = new Date(Number(currentYear), 0, 1).toISOString().split("T")[0];
@@ -118,6 +119,7 @@ export default function AdminAttendancePage() {
         setFilterYear(currentYear);
         setFilterMonth("");
         setFilterDay("");
+        setFilterGroup("");
         setError(null);
         const startDate = new Date(Number(currentYear), 0, 1).toISOString().split("T")[0];
         const endDate = new Date(Number(currentYear), 11, 31).toISOString().split("T")[0];
@@ -172,6 +174,14 @@ export default function AdminAttendancePage() {
         });
     };
 
+    const uniqueGroups = Array.from(
+        new Map(classes.map((c) => [c.groupId, c.groupName])).entries()
+    ).map(([id, name]) => ({ id, name }));
+
+    const displayedClasses = filterGroup
+        ? classes.filter((c) => c.groupId === Number(filterGroup))
+        : classes;
+
     const selectedClass = classes.find((c) => c.id === selectedClassId);
 
     return (
@@ -195,59 +205,139 @@ export default function AdminAttendancePage() {
                         <div>
                             <h3 style={{ marginBottom: "1rem", color: "var(--text-primary)" }}>📚 Scheduled Classes</h3>
                             <div className="card-container" style={{ marginBottom: "1rem" }}>
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem" }}>
-                                    <input
-                                        type="number"
-                                        inputMode="numeric"
-                                        value={filterYear}
-                                        onChange={(e) => setFilterYear(e.target.value)}
-                                        placeholder="Year (e.g. 2026)"
-                                        style={{
-                                            padding: "0.6rem",
-                                            borderRadius: "8px",
-                                            border: "1px solid var(--border-color)",
-                                            fontFamily: "inherit",
-                                            fontSize: "0.9rem",
-                                        }}
-                                    />
-                                    <input
-                                        type="number"
-                                        inputMode="numeric"
-                                        value={filterMonth}
-                                        onChange={(e) => setFilterMonth(e.target.value)}
-                                        placeholder="Month (1-12)"
-                                        style={{
-                                            padding: "0.6rem",
-                                            borderRadius: "8px",
-                                            border: "1px solid var(--border-color)",
-                                            fontFamily: "inherit",
-                                            fontSize: "0.9rem",
-                                        }}
-                                    />
-                                    <input
-                                        type="number"
-                                        inputMode="numeric"
-                                        value={filterDay}
-                                        onChange={(e) => setFilterDay(e.target.value)}
-                                        placeholder="Day (1-31)"
-                                        style={{
-                                            padding: "0.6rem",
-                                            borderRadius: "8px",
-                                            border: "1px solid var(--border-color)",
-                                            fontFamily: "inherit",
-                                            fontSize: "0.9rem",
-                                        }}
-                                    />
-                                </div>
-                                <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
-                                    <button className="btn-primary" onClick={applyFilters}>Search</button>
-                                    <button className="btn-secondary" onClick={resetFilters}>Reset</button>
-                                </div>
-                                <p style={{ margin: "0.75rem 0 0", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                                    Leave month/day empty to show the full year. Leave day empty to show the entire month.
+                                <p style={{ margin: "0 0 1rem 0", fontWeight: 600, fontSize: "0.95rem", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "6px" }}>
+                                    🔍 Filter by Date
                                 </p>
+
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                                    {/* Year */}
+                                    <div>
+                                        <label style={{ display: "block", marginBottom: "4px", fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                                            Year
+                                        </label>
+                                        <input
+                                            type="number"
+                                            inputMode="numeric"
+                                            value={filterYear}
+                                            onChange={(e) => setFilterYear(e.target.value)}
+                                            placeholder="e.g. 2026"
+                                            style={{
+                                                width: "100%",
+                                                padding: "0.6rem 0.75rem",
+                                                borderRadius: "8px",
+                                                border: "1.5px solid var(--border-color)",
+                                                fontFamily: "inherit",
+                                                fontSize: "0.9rem",
+                                                boxSizing: "border-box",
+                                                outline: "none",
+                                                transition: "border-color 0.2s",
+                                            }}
+                                        />
+                                    </div>
+
+                                    {/* Month */}
+                                    <div>
+                                        <label style={{ display: "block", marginBottom: "4px", fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                                            Month <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+                                        </label>
+                                        <select
+                                            value={filterMonth}
+                                            onChange={(e) => { setFilterMonth(e.target.value); if (!e.target.value) setFilterDay(""); }}
+                                            style={{
+                                                width: "100%",
+                                                padding: "0.6rem 0.75rem",
+                                                borderRadius: "8px",
+                                                border: "1.5px solid var(--border-color)",
+                                                fontFamily: "inherit",
+                                                fontSize: "0.9rem",
+                                                boxSizing: "border-box",
+                                                backgroundColor: "white",
+                                                cursor: "pointer",
+                                                outline: "none",
+                                            }}
+                                        >
+                                            <option value="">— All months —</option>
+                                            {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((name, i) => (
+                                                <option key={i + 1} value={String(i + 1)}>{name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Group */}
+                                    <div>
+                                        <label style={{ display: "block", marginBottom: "4px", fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                                            Group <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+                                        </label>
+                                        <select
+                                            value={filterGroup}
+                                            onChange={(e) => setFilterGroup(e.target.value)}
+                                            style={{
+                                                width: "100%",
+                                                padding: "0.6rem 0.75rem",
+                                                borderRadius: "8px",
+                                                border: "1.5px solid var(--border-color)",
+                                                fontFamily: "inherit",
+                                                fontSize: "0.9rem",
+                                                boxSizing: "border-box",
+                                                backgroundColor: "white",
+                                                cursor: "pointer",
+                                                outline: "none",
+                                            }}
+                                        >
+                                            <option value="">— All groups —</option>
+                                            {uniqueGroups.map((g) => (
+                                                <option key={g.id} value={String(g.id)}>{g.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Day — only shown when month is selected */}
+                                    {filterMonth && (
+                                        <div>
+                                            <label style={{ display: "block", marginBottom: "4px", fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                                                Day <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                inputMode="numeric"
+                                                value={filterDay}
+                                                onChange={(e) => setFilterDay(e.target.value)}
+                                                placeholder="1 – 31"
+                                                min={1}
+                                                max={31}
+                                                style={{
+                                                    width: "100%",
+                                                    padding: "0.6rem 0.75rem",
+                                                    borderRadius: "8px",
+                                                    border: "1.5px solid var(--border-color)",
+                                                    fontFamily: "inherit",
+                                                    fontSize: "0.9rem",
+                                                    boxSizing: "border-box",
+                                                    outline: "none",
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
+                                    <button
+                                        className="btn-primary"
+                                        onClick={applyFilters}
+                                        style={{ flex: 1 }}
+                                    >
+                                        Search
+                                    </button>
+                                    <button
+                                        className="btn-secondary"
+                                        onClick={resetFilters}
+                                        style={{ flex: 1 }}
+                                    >
+                                        Reset
+                                    </button>
+                                </div>
                             </div>
-                            {classes.length === 0 ? (
+                            {displayedClasses.length === 0 ? (
                                 <div className="card-container">
                                     <div className="empty-state">
                                         <div className="empty-state-icon">🔍</div>
@@ -256,7 +346,7 @@ export default function AdminAttendancePage() {
                                 </div>
                             ) : (
                                 <div style={{ display: "grid", gap: "0.5rem", maxHeight: "600px", overflowY: "auto" }}>
-                                    {classes.map((cls) => {
+                                    {displayedClasses.map((cls) => {
                                         return (
                                             <div
                                                 key={cls.id}

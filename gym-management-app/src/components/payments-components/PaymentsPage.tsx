@@ -9,6 +9,7 @@ interface StudentPaymentStatus {
     status: string;
     subscriptionType: string;
     hasPaid: boolean;
+    paymentId?: number;
     amount?: number | string;
     paymentDate?: string;
 }
@@ -47,7 +48,6 @@ export default function PaymentsPage() {
     const [storedMonths, setStoredMonths] = useState<any[]>([]);
 
     // Modal states
-    const [showStudentModal, setShowStudentModal] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
     const [studentPayments, setStudentPayments] = useState<Payment[]>([]);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -154,10 +154,40 @@ export default function PaymentsPage() {
         }
     };
 
-    const handleSelectStudent = (student: Student) => {
-        setSelectedStudent(student);
-        fetchStudentPayments(student.id);
-        setShowStudentModal(true);
+    const handleMonthlyRowClick = (student: StudentPaymentStatus) => {
+        const fullStudent = allStudents.find(s => s.id === student.id);
+        if (!fullStudent) return;
+        setSelectedStudent(fullStudent);
+
+        if (student.hasPaid && student.paymentId) {
+            const amt = student.amount !== undefined ? student.amount.toString() : "";
+            const pDate = student.paymentDate ?? new Date().toISOString().split('T')[0];
+            setEditingPayment({
+                id: student.paymentId,
+                amount: student.amount ?? 0,
+                year: parseInt(selectedYear),
+                month: parseInt(selectedMonthNum),
+                paymentDate: pDate,
+                studentId: student.id,
+                firstName: student.firstName,
+                lastName: student.lastName
+            });
+            setFormData({
+                amount: amt,
+                year: selectedYear,
+                month: selectedMonthNum,
+                paymentDate: pDate
+            });
+        } else {
+            setEditingPayment(null);
+            setFormData({
+                amount: "",
+                year: selectedYear,
+                month: selectedMonthNum,
+                paymentDate: new Date().toISOString().split('T')[0]
+            });
+        }
+        setShowPaymentModal(true);
     };
 
     const handleAddPayment = () => {
@@ -303,7 +333,7 @@ export default function PaymentsPage() {
                         📅 Monthly View
                     </button>
                     <button
-                        onClick={() => setActiveTab("history")}
+                        onClick={() => { setActiveTab("history"); setSelectedStudent(null); }}
                         style={{
                             padding: "12px 24px",
                             fontSize: "16px",
@@ -316,7 +346,7 @@ export default function PaymentsPage() {
                             transition: "all 0.3s ease"
                         }}
                     >
-                        📜 Payment History
+                        � Manage Student
                     </button>
                 </div>
 
@@ -444,7 +474,12 @@ export default function PaymentsPage() {
                                                 const statusText = student.hasPaid ? "✅ PAID" : "❌ NOT PAID";
 
                                                 return (
-                                                    <tr key={student.id} style={{ borderBottom: "1px solid #ddd", backgroundColor: rowBgColor }}>
+                                                    <tr
+                                                        key={student.id}
+                                                        onClick={() => handleMonthlyRowClick(student)}
+                                                        style={{ borderBottom: "1px solid #ddd", backgroundColor: rowBgColor, cursor: "pointer" }}
+                                                        title={student.hasPaid ? "Click to edit payment" : "Click to add payment"}
+                                                    >
                                                         <td style={{ padding: "12px" }}>{student.id}</td>
                                                         <td style={{ padding: "12px", fontWeight: "500" }}>
                                                             {student.firstName} {student.lastName}
@@ -480,179 +515,77 @@ export default function PaymentsPage() {
                         </>
                     )}
 
-                    {/* HISTORY VIEW TAB */}
+                    {/* MANAGE STUDENT TAB */}
                     {activeTab === "history" && (
                         <>
-                            <div style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <h2 style={{ margin: "0", color: "#2c3e50" }}>💰 All Payments History</h2>
-                                <button
-                                    onClick={() => {
-                                        setSelectedStudent(null);
-                                        setShowStudentModal(true);
-                                    }}
-                                    style={{
-                                        padding: "12px 24px",
-                                        fontSize: "16px",
-                                        fontWeight: "600",
-                                        backgroundColor: "#27ae60",
-                                        color: "white",
-                                        border: "none",
-                                        borderRadius: "6px",
-                                        cursor: "pointer"
-                                    }}
-                                >
-                                    ➕ Select Student to Manage
-                                </button>
-                            </div>
-
-                            {allPayments.length === 0 ? (
-                                <div style={{ textAlign: "center", padding: "40px" }}>
-                                    <p style={{ fontSize: "18px", color: "#666" }}>No payments recorded yet</p>
-                                </div>
-                            ) : (
-                                <div style={{ overflowX: "auto" }}>
-                                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                                        <thead>
-                                            <tr style={{ backgroundColor: "#f5f5f5", borderBottom: "2px solid #ddd" }}>
-                                                <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>ID</th>
-                                                <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Student Name</th>
-                                                <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Amount</th>
-                                                <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Year-Month</th>
-                                                <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Payment Date</th>
-                                                <th style={{ padding: "12px", textAlign: "center", fontWeight: "600" }}>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {allPayments.map((payment) => (
-                                                <tr key={payment.id} style={{ borderBottom: "1px solid #ddd" }}>
-                                                    <td style={{ padding: "12px" }}>{payment.id}</td>
-                                                    <td style={{ padding: "12px" }}>
-                                                        {payment.firstName} {payment.lastName}
-                                                    </td>
-                                                    <td style={{ padding: "12px", fontWeight: "600", color: "#27ae60" }}>
-                                                        {formatCurrency(payment.amount)}
-                                                    </td>
-                                                    <td style={{ padding: "12px" }}>
-                                                        {payment.year}-{String(payment.month).padStart(2, '0')}
-                                                    </td>
-                                                    <td style={{ padding: "12px" }}>
-                                                        {formatDate(payment.paymentDate)}
-                                                    </td>
-                                                    <td style={{ padding: "12px", textAlign: "center", display: "flex", gap: "8px", justifyContent: "center" }}>
-                                                        <button
-                                                            onClick={() => {
-                                                                const student = allStudents.find(s => s.id === payment.studentId);
-                                                                if (student) {
-                                                                    setSelectedStudent(student);
-                                                                    fetchStudentPayments(student.id);
-                                                                    handleEditPayment(payment);
-                                                                    setShowPaymentModal(true);
-                                                                }
-                                                            }}
-                                                            style={{
-                                                                padding: "6px 12px",
-                                                                backgroundColor: "#f39c12",
-                                                                color: "white",
-                                                                border: "none",
-                                                                borderRadius: "4px",
-                                                                cursor: "pointer",
-                                                                fontSize: "12px"
-                                                            }}
-                                                        >
-                                                            ✏️ Edit
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeletePayment(payment.id)}
-                                                            style={{
-                                                                padding: "6px 12px",
-                                                                backgroundColor: "#e74c3c",
-                                                                color: "white",
-                                                                border: "none",
-                                                                borderRadius: "4px",
-                                                                cursor: "pointer",
-                                                                fontSize: "12px"
-                                                            }}
-                                                        >
-                                                            🗑️ Delete
-                                                        </button>
-                                                    </td>
+                            {!selectedStudent ? (
+                                <>
+                                    <h2 style={{ margin: "0 0 20px 0", color: "#2c3e50" }}>👥 Select a Student</h2>
+                                    <div style={{ overflowX: "auto" }}>
+                                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                                            <thead>
+                                                <tr style={{ backgroundColor: "#f5f5f5", borderBottom: "2px solid #ddd" }}>
+                                                    <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>ID</th>
+                                                    <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Name</th>
+                                                    <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Subscription</th>
+                                                    <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Status</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </>
-                    )}
-                </div>
-
-                {/* Student Selection Modal */}
-                {showStudentModal && (
-                    <div style={{
-                        position: "fixed",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: "rgba(0,0,0,0.5)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        zIndex: 1000
-                    }}>
-                        <div style={{
-                            backgroundColor: "white",
-                            borderRadius: "12px",
-                            padding: "40px",
-                            maxWidth: "900px",
-                            width: "90%",
-                            maxHeight: "90vh",
-                            overflowY: "auto",
-                            boxShadow: "0 10px 40px rgba(0,0,0,0.3)"
-                        }}>
-                            {selectedStudent ? (
+                                            </thead>
+                                            <tbody>
+                                                {allStudents.map((student) => (
+                                                    <tr
+                                                        key={student.id}
+                                                        onClick={() => { setSelectedStudent(student); fetchStudentPayments(student.id); }}
+                                                        style={{ borderBottom: "1px solid #ddd", cursor: "pointer" }}
+                                                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f7ff")}
+                                                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
+                                                    >
+                                                        <td style={{ padding: "12px" }}>{student.id}</td>
+                                                        <td style={{ padding: "12px", fontWeight: "500" }}>{student.firstName} {student.lastName}</td>
+                                                        <td style={{ padding: "12px" }}>
+                                                            <span style={{
+                                                                padding: "4px 8px", borderRadius: "4px", fontSize: "12px",
+                                                                backgroundColor: student.subscriptionType === "premium" ? "#f39c12" : "#3498db",
+                                                                color: "white", fontWeight: "600"
+                                                            }}>
+                                                                {(student.subscriptionType || "basic").toUpperCase()}
+                                                            </span>
+                                                        </td>
+                                                        <td style={{ padding: "12px" }}>
+                                                            <span style={{
+                                                                padding: "4px 8px", borderRadius: "4px", fontSize: "12px",
+                                                                backgroundColor: student.status === "active" ? "#d4edda" : "#f8d7da",
+                                                                color: student.status === "active" ? "#155724" : "#721c24",
+                                                                fontWeight: "600"
+                                                            }}>
+                                                                {(student.status || "active").toUpperCase()}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </>
+                            ) : (
                                 <>
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                                        <h2 style={{ margin: "0", color: "#2c3e50" }}>
-                                            👤 {selectedStudent.firstName} {selectedStudent.lastName}
-                                        </h2>
-                                        <button
-                                            onClick={() => {
-                                                setShowStudentModal(false);
-                                                setSelectedStudent(null);
-                                            }}
-                                            style={{
-                                                backgroundColor: "#95a5a6",
-                                                color: "white",
-                                                border: "none",
-                                                padding: "8px 16px",
-                                                borderRadius: "4px",
-                                                cursor: "pointer",
-                                                fontWeight: "600"
-                                            }}
-                                        >
-                                            ✕ Close
-                                        </button>
+                                        <h2 style={{ margin: 0, color: "#2c3e50" }}>👤 {selectedStudent.firstName} {selectedStudent.lastName}</h2>
+                                        <div style={{ display: "flex", gap: "10px" }}>
+                                            <button
+                                                onClick={handleAddPayment}
+                                                style={{ padding: "10px 20px", fontSize: "14px", fontWeight: "600", backgroundColor: "#27ae60", color: "white", border: "none", borderRadius: "6px", cursor: "pointer" }}
+                                            >
+                                                ➕ Add Payment
+                                            </button>
+                                            <button
+                                                onClick={() => setSelectedStudent(null)}
+                                                style={{ padding: "10px 20px", fontSize: "14px", fontWeight: "600", backgroundColor: "#95a5a6", color: "white", border: "none", borderRadius: "6px", cursor: "pointer" }}
+                                            >
+                                                ← Back
+                                            </button>
+                                        </div>
                                     </div>
-
-                                    <div style={{ marginBottom: "20px" }}>
-                                        <button
-                                            onClick={handleAddPayment}
-                                            style={{
-                                                padding: "12px 24px",
-                                                fontSize: "16px",
-                                                fontWeight: "600",
-                                                backgroundColor: "#27ae60",
-                                                color: "white",
-                                                border: "none",
-                                                borderRadius: "6px",
-                                                cursor: "pointer"
-                                            }}
-                                        >
-                                            ➕ Add New Payment
-                                        </button>
-                                    </div>
-
                                     {studentPayments.length === 0 ? (
                                         <p style={{ color: "#666", fontSize: "16px" }}>No payments recorded for this student</p>
                                     ) : (
@@ -669,44 +602,24 @@ export default function PaymentsPage() {
                                                 <tbody>
                                                     {studentPayments.map((payment) => (
                                                         <tr key={payment.id} style={{ borderBottom: "1px solid #ddd" }}>
-                                                            <td style={{ padding: "12px", fontWeight: "600", color: "#27ae60" }}>
-                                                                {formatCurrency(payment.amount)}
-                                                            </td>
-                                                            <td style={{ padding: "12px" }}>
-                                                                {payment.year}-{String(payment.month).padStart(2, '0')}
-                                                            </td>
-                                                            <td style={{ padding: "12px" }}>
-                                                                {formatDate(payment.paymentDate)}
-                                                            </td>
-                                                            <td style={{ padding: "12px", textAlign: "center", display: "flex", gap: "8px", justifyContent: "center" }}>
-                                                                <button
-                                                                    onClick={() => handleEditPayment(payment)}
-                                                                    style={{
-                                                                        padding: "6px 12px",
-                                                                        backgroundColor: "#f39c12",
-                                                                        color: "white",
-                                                                        border: "none",
-                                                                        borderRadius: "4px",
-                                                                        cursor: "pointer",
-                                                                        fontSize: "12px"
-                                                                    }}
-                                                                >
-                                                                    ✏️ Edit
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleDeletePayment(payment.id)}
-                                                                    style={{
-                                                                        padding: "6px 12px",
-                                                                        backgroundColor: "#e74c3c",
-                                                                        color: "white",
-                                                                        border: "none",
-                                                                        borderRadius: "4px",
-                                                                        cursor: "pointer",
-                                                                        fontSize: "12px"
-                                                                    }}
-                                                                >
-                                                                    🗑️ Delete
-                                                                </button>
+                                                            <td style={{ padding: "12px", fontWeight: "600", color: "#27ae60" }}>{formatCurrency(payment.amount)}</td>
+                                                            <td style={{ padding: "12px" }}>{payment.year}-{String(payment.month).padStart(2, "0")}</td>
+                                                            <td style={{ padding: "12px" }}>{formatDate(payment.paymentDate)}</td>
+                                                            <td style={{ padding: "12px", textAlign: "center" }}>
+                                                                <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+                                                                    <button
+                                                                        onClick={() => handleEditPayment(payment)}
+                                                                        style={{ padding: "6px 12px", backgroundColor: "#f39c12", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}
+                                                                    >
+                                                                        ✏️ Edit
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleDeletePayment(payment.id)}
+                                                                        style={{ padding: "6px 12px", backgroundColor: "#e74c3c", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}
+                                                                    >
+                                                                        🗑️ Delete
+                                                                    </button>
+                                                                </div>
                                                             </td>
                                                         </tr>
                                                     ))}
@@ -715,77 +628,10 @@ export default function PaymentsPage() {
                                         </div>
                                     )}
                                 </>
-                            ) : (
-                                <>
-                                    <h2 style={{ margin: "0 0 25px 0", color: "#2c3e50" }}>👥 Select a Student</h2>
-                                    <div style={{ overflowX: "auto" }}>
-                                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                                            <thead>
-                                                <tr style={{ backgroundColor: "#f5f5f5", borderBottom: "2px solid #ddd" }}>
-                                                    <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>ID</th>
-                                                    <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Name</th>
-                                                    <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Subscription</th>
-                                                    <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Status</th>
-                                                    <th style={{ padding: "12px", textAlign: "center", fontWeight: "600" }}>Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {allStudents.map((student) => (
-                                                    <tr key={student.id} style={{ borderBottom: "1px solid #ddd" }}>
-                                                        <td style={{ padding: "12px" }}>{student.id}</td>
-                                                        <td style={{ padding: "12px" }}>
-                                                            {student.firstName} {student.lastName}
-                                                        </td>
-                                                        <td style={{ padding: "12px" }}>
-                                                            <span style={{
-                                                                padding: "4px 8px",
-                                                                borderRadius: "4px",
-                                                                fontSize: "12px",
-                                                                backgroundColor: student.subscriptionType === 'premium' ? "#f39c12" : "#3498db",
-                                                                color: "white",
-                                                                fontWeight: "600"
-                                                            }}>
-                                                                {(student.subscriptionType || "basic").toUpperCase()}
-                                                            </span>
-                                                        </td>
-                                                        <td style={{ padding: "12px" }}>
-                                                            <span style={{
-                                                                padding: "4px 8px",
-                                                                borderRadius: "4px",
-                                                                fontSize: "12px",
-                                                                backgroundColor: student.status === 'active' ? "#d4edda" : "#f8d7da",
-                                                                color: student.status === 'active' ? "#155724" : "#721c24",
-                                                                fontWeight: "600"
-                                                            }}>
-                                                                {(student.status || "active").toUpperCase()}
-                                                            </span>
-                                                        </td>
-                                                        <td style={{ padding: "12px", textAlign: "center" }}>
-                                                            <button
-                                                                onClick={() => handleSelectStudent(student)}
-                                                                style={{
-                                                                    padding: "6px 12px",
-                                                                    backgroundColor: "#3498db",
-                                                                    color: "white",
-                                                                    border: "none",
-                                                                    borderRadius: "4px",
-                                                                    cursor: "pointer",
-                                                                    fontSize: "12px"
-                                                                }}
-                                                            >
-                                                                Select
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </>
                             )}
-                        </div>
-                    </div>
-                )}
+                        </>
+                    )}
+                </div>
 
                 {/* Payment Form Modal */}
                 {showPaymentModal && selectedStudent && (
@@ -902,6 +748,28 @@ export default function PaymentsPage() {
                             </div>
 
                             <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                                {editingPayment && (
+                                    <button
+                                        onClick={async () => {
+                                            if (!window.confirm("Delete this payment?")) return;
+                                            await handleDeletePayment(editingPayment.id);
+                                            setShowPaymentModal(false);
+                                        }}
+                                        style={{
+                                            padding: "12px 24px",
+                                            fontSize: "14px",
+                                            fontWeight: "600",
+                                            backgroundColor: "#e74c3c",
+                                            color: "white",
+                                            border: "none",
+                                            borderRadius: "6px",
+                                            cursor: "pointer",
+                                            marginRight: "auto"
+                                        }}
+                                    >
+                                        🗑️ Delete
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => setShowPaymentModal(false)}
                                     style={{

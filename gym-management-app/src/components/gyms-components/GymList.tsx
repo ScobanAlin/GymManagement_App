@@ -5,17 +5,16 @@ import { Gym } from "./GymsPage";
 
 type Props = {
     gyms: Gym[];
-    onEdit: (gym: Gym) => void;
-    onDelete: (id: number) => void;
+    onOpen: (gym: Gym) => void;
     onAdd: () => void;
 };
 
-export default function GymList({ gyms, onEdit, onDelete, onAdd }: Props) {
+export default function GymList({ gyms, onOpen, onAdd }: Props) {
     return (
         <div className="cards-grid">
             <AddGymCard onAdd={onAdd} />
             {gyms.map((gym) => (
-                <GymCard key={gym.id} gym={gym} onEdit={onEdit} onDelete={onDelete} />
+                <GymCard key={gym.id} gym={gym} onOpen={onOpen} />
             ))}
         </div>
     );

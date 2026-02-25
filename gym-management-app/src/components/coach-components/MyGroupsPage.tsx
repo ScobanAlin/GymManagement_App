@@ -67,7 +67,7 @@ export default function MyGroupsPage() {
     const initialEndDate = new Date(Number(currentYear), 11, 31);
     const [filterYear, setFilterYear] = useState(currentYear);
     const [filterMonth, setFilterMonth] = useState("");
-    const [filterDay, setFilterDay] = useState("");
+    const [filterDow, setFilterDow] = useState<number | null>(null);
     const [filterError, setFilterError] = useState<string | null>(null);
     const [classFilterRange, setClassFilterRange] = useState<{ startDate: Date; endDate: Date } | null>({
         startDate: initialStartDate,
@@ -172,7 +172,7 @@ export default function MyGroupsPage() {
     const resetClassFilters = () => {
         setFilterYear(currentYear);
         setFilterMonth("");
-        setFilterDay("");
+        setFilterDow(null);
         setFilterError(null);
         setClassFilterRange({ startDate: initialStartDate, endDate: initialEndDate });
     };
@@ -180,25 +180,25 @@ export default function MyGroupsPage() {
     const formatDate = (date: string) =>
         new Date(date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 
+    const formatDob = (iso: string | undefined) => {
+        if (!iso) return "-";
+        const d = new Date(iso);
+        const day = String(d.getUTCDate()).padStart(2, "0");
+        const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+        const year = d.getUTCFullYear();
+        return `${day}.${month}.${year}`;
+    };
+
     const buildClassFilterRange = () => {
         const year = Number(filterYear);
         const month = filterMonth ? Number(filterMonth) : null;
-        const day = filterDay ? Number(filterDay) : null;
 
         if (!filterYear || Number.isNaN(year) || year < 1900) {
             return { error: "Please enter a valid year" };
         }
 
-        if (day !== null && month === null) {
-            return { error: "Please enter a month when filtering by day" };
-        }
-
         if (month !== null && (month < 1 || month > 12)) {
             return { error: "Month must be between 1 and 12" };
-        }
-
-        if (day !== null && (day < 1 || day > 31)) {
-            return { error: "Day must be between 1 and 31" };
         }
 
         let startDate: Date;
@@ -207,12 +207,9 @@ export default function MyGroupsPage() {
         if (month === null) {
             startDate = new Date(year, 0, 1);
             endDate = new Date(year, 11, 31);
-        } else if (day === null) {
+        } else {
             startDate = new Date(year, month - 1, 1);
             endDate = new Date(year, month, 0);
-        } else {
-            startDate = new Date(year, month - 1, day);
-            endDate = new Date(year, month - 1, day);
         }
 
         return { startDate, endDate };
@@ -237,9 +234,13 @@ export default function MyGroupsPage() {
 
     const filteredClasses = selectedGroup
         ? (groupClasses[selectedGroup.id] || []).filter((cls) => {
-            if (!classFilterRange) return true;
-            const classDate = new Date(cls.date);
-            return classDate >= classFilterRange.startDate && classDate <= classFilterRange.endDate;
+            const [y, m, d] = cls.date.split("-").map(Number);
+            const localDate = new Date(y, m - 1, d);
+            if (classFilterRange) {
+                if (localDate < classFilterRange.startDate || localDate > classFilterRange.endDate) return false;
+            }
+            if (filterDow !== null && localDate.getDay() !== filterDow) return false;
+            return true;
         })
         : [];
 
@@ -391,9 +392,6 @@ export default function MyGroupsPage() {
                                                 <p style={{ margin: "0 0 0.25rem 0", fontWeight: 600 }}>
                                                     {student.firstName} {student.lastName}
                                                 </p>
-                                                <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--text-secondary)" }}>
-                                                    CNP: {student.cnp}
-                                                </p>
                                                 <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.8rem", color: "#4338ca", fontWeight: 600 }}>
                                                     Click for details →
                                                 </p>
@@ -404,57 +402,74 @@ export default function MyGroupsPage() {
                             ) : (
                                 <>
                                     <div className="card-container" style={{ marginBottom: "0.75rem" }}>
-                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem" }}>
-                                            <input
-                                                type="number"
-                                                inputMode="numeric"
-                                                value={filterYear}
-                                                onChange={(e) => setFilterYear(e.target.value)}
-                                                placeholder="Year (e.g. 2026)"
-                                                style={{
-                                                    padding: "0.6rem",
-                                                    borderRadius: "8px",
-                                                    border: "1px solid var(--border-color)",
-                                                    fontFamily: "inherit",
-                                                    fontSize: "0.9rem",
-                                                }}
-                                            />
-                                            <input
-                                                type="number"
-                                                inputMode="numeric"
-                                                value={filterMonth}
-                                                onChange={(e) => setFilterMonth(e.target.value)}
-                                                placeholder="Month (1-12)"
-                                                style={{
-                                                    padding: "0.6rem",
-                                                    borderRadius: "8px",
-                                                    border: "1px solid var(--border-color)",
-                                                    fontFamily: "inherit",
-                                                    fontSize: "0.9rem",
-                                                }}
-                                            />
-                                            <input
-                                                type="number"
-                                                inputMode="numeric"
-                                                value={filterDay}
-                                                onChange={(e) => setFilterDay(e.target.value)}
-                                                placeholder="Day (1-31)"
-                                                style={{
-                                                    padding: "0.6rem",
-                                                    borderRadius: "8px",
-                                                    border: "1px solid var(--border-color)",
-                                                    fontFamily: "inherit",
-                                                    fontSize: "0.9rem",
-                                                }}
-                                            />
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                                            {/* Year + Month row */}
+                                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                                                <div>
+                                                    <label style={{ display: "block", marginBottom: "4px", fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Year</label>
+                                                    <input
+                                                        type="number"
+                                                        inputMode="numeric"
+                                                        value={filterYear}
+                                                        onChange={(e) => setFilterYear(e.target.value)}
+                                                        placeholder="e.g. 2026"
+                                                        style={{ width: "100%", padding: "0.6rem 0.75rem", borderRadius: "8px", border: "1.5px solid var(--border-color)", fontFamily: "inherit", fontSize: "0.9rem", boxSizing: "border-box" as const }}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label style={{ display: "block", marginBottom: "4px", fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Month <span style={{ fontWeight: 400, textTransform: "none" as const, letterSpacing: 0 }}>(optional)</span></label>
+                                                    <select
+                                                        value={filterMonth}
+                                                        onChange={(e) => setFilterMonth(e.target.value)}
+                                                        style={{ width: "100%", padding: "0.6rem 0.75rem", borderRadius: "8px", border: "1.5px solid var(--border-color)", fontFamily: "inherit", fontSize: "0.9rem", boxSizing: "border-box" as const, backgroundColor: "white", cursor: "pointer" }}
+                                                    >
+                                                        <option value="">— All months —</option>
+                                                        {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((name, i) => (
+                                                            <option key={i + 1} value={String(i + 1)}>{name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            {/* Day of week pills */}
+                                            <div>
+                                                <label style={{ display: "block", marginBottom: "0.4rem", fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Day of Week <span style={{ fontWeight: 400, textTransform: "none" as const, letterSpacing: 0 }}>(optional)</span></label>
+                                                <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" as const }}>
+                                                    {[{ label: "Mon", value: 1 }, { label: "Tue", value: 2 }, { label: "Wed", value: 3 }, { label: "Thu", value: 4 }, { label: "Fri", value: 5 }, { label: "Sat", value: 6 }, { label: "Sun", value: 0 }].map((d) => {
+                                                        const active = filterDow === d.value;
+                                                        return (
+                                                            <button
+                                                                key={d.value}
+                                                                type="button"
+                                                                onClick={() => setFilterDow(active ? null : d.value)}
+                                                                style={{
+                                                                    padding: "0.3rem 0.8rem", borderRadius: "20px", cursor: "pointer",
+                                                                    border: `2px solid ${active ? "#2ecc71" : "var(--border-color)"}`,
+                                                                    background: active ? "#2ecc71" : "transparent",
+                                                                    color: active ? "#fff" : "var(--text-secondary)",
+                                                                    fontWeight: active ? 700 : 400, fontSize: "0.85rem",
+                                                                    transition: "all 0.2s ease",
+                                                                }}
+                                                            >
+                                                                {d.label}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                    {filterDow !== null && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setFilterDow(null)}
+                                                            style={{ padding: "0.3rem 0.7rem", borderRadius: "20px", cursor: "pointer", border: "1.5px solid var(--border-color)", background: "transparent", color: "var(--text-secondary)", fontSize: "0.78rem" }}
+                                                        >
+                                                            ✕ Clear
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
-                                            <button className="btn-primary" onClick={applyClassFilters}>Search</button>
-                                            <button className="btn-secondary" onClick={resetClassFilters}>Reset</button>
+                                        <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
+                                            <button className="btn-primary" onClick={applyClassFilters} style={{ flex: 1 }}>Search</button>
+                                            <button className="btn-secondary" onClick={resetClassFilters} style={{ flex: 1 }}>Reset</button>
                                         </div>
-                                        <p style={{ margin: "0.75rem 0 0", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                                            Leave month/day empty to show the full year. Leave day empty to show the entire month.
-                                        </p>
                                         {filterError && (
                                             <p style={{ margin: "0.75rem 0 0", color: "#c0392b", fontSize: "0.85rem" }}>{filterError}</p>
                                         )}
@@ -530,7 +545,7 @@ export default function MyGroupsPage() {
                                     </div>
                                     <div>
                                         <p style={{ margin: "0 0 0.25rem 0", color: "var(--text-secondary)", fontSize: "0.85rem" }}>Date of Birth</p>
-                                        <p style={{ margin: 0, fontWeight: 600 }}>{selectedStudent.dateOfBirth || "-"}</p>
+                                        <p style={{ margin: 0, fontWeight: 600 }}>{formatDob(selectedStudent.dateOfBirth)}</p>
                                     </div>
                                     <div>
                                         <p style={{ margin: "0 0 0.25rem 0", color: "var(--text-secondary)", fontSize: "0.85rem" }}>Subscription</p>

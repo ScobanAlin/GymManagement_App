@@ -90,6 +90,19 @@ export default function StudentsPage() {
     await loadStudents();
   };
 
+  /** Reload the student list AND refresh the selected student in the modal */
+  const reloadWithSelectedStudent = useCallback(async () => {
+    await loadStudents();
+    if (selectedStudent) {
+      try {
+        const res = await apiClient.get(`/students/${selectedStudent.id}`);
+        setSelectedStudent(res.data);
+      } catch {
+        // student may have been deleted; leave as-is
+      }
+    }
+  }, [loadStudents, selectedStudent]);
+
   return (
     <div className="page-layout">
       <Sidebar />
@@ -151,7 +164,7 @@ export default function StudentsPage() {
           onClose={() => setDetailsModalOpen(false)}
           onDelete={handleDeleteStudent}
           groups={groups}
-          reload={loadStudents}
+          reload={reloadWithSelectedStudent}
         />
         <AddStudentModal
           isOpen={addModalOpen}
