@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Register from "./pages/Register";
@@ -17,6 +17,7 @@ import SubscriptionTypes from "./pages/SubscriptionTypes";
 export default function App() {
     return (
         <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/home" element={<Home />} />
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/observations" element={<Observations />} />
             <Route path="/subscription-types" element={<SubscriptionTypes />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes >
     );
 }
