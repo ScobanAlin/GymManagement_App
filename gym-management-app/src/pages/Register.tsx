@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import "./Login.css";
 import LoginHeader from "../components/LoginHeader";
 import apiClient from "../services/apiClient";
@@ -128,12 +129,12 @@ export default function Register() {
                             {error && <p className="error">{error}</p>}
                             {success && (
                                 <p className="success-message">
-                                    ✅ Registration successful! You can now <a href="/login">login</a>.
+                                    ✅ Registration successful! You can now <Link to="/login">login</Link>.
                                 </p>
                             )}
                         </form>
                         <p className="register-text">
-                            Already have an account? <a href="/login">Login</a>
+                            Already have an account? <Link to="/login">Login</Link>
                         </p>
                     </div>
                 </div>

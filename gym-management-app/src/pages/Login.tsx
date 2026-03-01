@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 import LoginHeader from "../components/LoginHeader";
 import apiClient from "../services/apiClient";
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -28,7 +30,7 @@ export default function Login() {
       localStorage.setItem("user", JSON.stringify(user));
 
       console.log("Login successful:", user);
-      window.location.href = "/home"; // or use navigate("/home");
+      navigate("/home");
     } catch (err: any) {
       console.error("Login error:", err);
       const message = err.response?.data?.message || "Invalid email or password";
@@ -75,7 +77,7 @@ export default function Login() {
               {error && <p className="error">{error}</p>}
             </form>
             <p className="register-text">
-              Don’t have an account? <a href="/register">Register</a>
+              Don’t have an account? <Link to="/register">Register</Link>
             </p>
           </div>
         </div>
