@@ -94,6 +94,26 @@ export default function NotificationsPage() {
         }
     };
 
+    const markNotificationAsUnread = async (notification: NotificationItem) => {
+        if (!notification.isRead) return { ...notification, isRead: false };
+
+        try {
+            await apiClient.put(`/notifications/${notification.id}/read`, {
+                isRead: false
+            });
+
+            const updated = { ...notification, isRead: false };
+            setNotifications((prev) =>
+                prev.map((item) => (item.id === notification.id ? updated : item))
+            );
+            return updated;
+        } catch (err) {
+            console.error("Error updating notification:", err);
+            alert("Failed to update notification");
+            return notification;
+        }
+    };
+
     const openNotificationModal = async (notification: NotificationItem) => {
         const updated = await markNotificationAsRead(notification);
         setSelectedNotification(updated);
@@ -274,23 +294,43 @@ export default function NotificationsPage() {
                             <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "12px" }}>
                                 <h2 style={{ margin: 0, color: "#2c3e50" }}>Notification</h2>
                                 <div style={{ display: "flex", gap: "8px" }}>
-                                    <button
-                                        onClick={async () => {
-                                            const updated = await markNotificationAsRead(selectedNotification);
-                                            setSelectedNotification(updated);
-                                        }}
-                                        style={{
-                                            backgroundColor: selectedNotification.isRead ? "#3498db" : "#27ae60",
-                                            color: "white",
-                                            border: "none",
-                                            padding: "6px 12px",
-                                            borderRadius: "4px",
-                                            cursor: "pointer",
-                                            fontWeight: "600"
-                                        }}
-                                    >
-                                        Mark Read
-                                    </button>
+                                    {!selectedNotification.isRead ? (
+                                        <button
+                                            onClick={async () => {
+                                                const updated = await markNotificationAsRead(selectedNotification);
+                                                setSelectedNotification(updated);
+                                            }}
+                                            style={{
+                                                backgroundColor: "#27ae60",
+                                                color: "white",
+                                                border: "none",
+                                                padding: "6px 12px",
+                                                borderRadius: "4px",
+                                                cursor: "pointer",
+                                                fontWeight: "600"
+                                            }}
+                                        >
+                                            ✅ Mark as Read
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={async () => {
+                                                const updated = await markNotificationAsUnread(selectedNotification);
+                                                setSelectedNotification(updated);
+                                            }}
+                                            style={{
+                                                backgroundColor: "#f39c12",
+                                                color: "white",
+                                                border: "none",
+                                                padding: "6px 12px",
+                                                borderRadius: "4px",
+                                                cursor: "pointer",
+                                                fontWeight: "600"
+                                            }}
+                                        >
+                                            🔔 Mark as Unread
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => handleDelete(selectedNotification)}
                                         style={{

@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../Sidebar";
 import apiClient from "../../services/apiClient";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface StudentPaymentStatus {
     id: number;
     firstName: string;
     lastName: string;
+    email?: string;
     status: string;
     subscriptionType: string;
     hasPaid: boolean;
@@ -43,15 +46,18 @@ export default function PaymentsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [manageSearchTerm, setManageSearchTerm] = useState("");
     const [selectedYear, setSelectedYear] = useState("");
     const [selectedMonthNum, setSelectedMonthNum] = useState("");
     const [storedMonths, setStoredMonths] = useState<any[]>([]);
+    const [sendingReminder, setSendingReminder] = useState<number | null>(null);
 
     // Modal states
     const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
     const [studentPayments, setStudentPayments] = useState<Payment[]>([]);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+    const [subscriptionTypes, setSubscriptionTypes] = useState<{ name: string; price: number }[]>([]);
     const [formData, setFormData] = useState({
         amount: "",
         year: new Date().getFullYear().toString(),
@@ -100,12 +106,14 @@ export default function PaymentsPage() {
     const fetchInitialData = async () => {
         try {
             setLoading(true);
-            const [studentsRes, monthsRes] = await Promise.all([
+            const [studentsRes, monthsRes, subTypesRes] = await Promise.all([
                 apiClient.get("/students"),
-                apiClient.get("/payments/stored-months")
+                apiClient.get("/payments/stored-months"),
+                apiClient.get("/subscription-types")
             ]);
             setAllStudents(studentsRes.data);
             setStoredMonths(monthsRes.data);
+            setSubscriptionTypes(subTypesRes.data);
             console.log("Available months:", monthsRes.data);
         } catch (err) {
             console.error("Error fetching initial data:", err);
@@ -154,6 +162,14 @@ export default function PaymentsPage() {
         }
     };
 
+    const getDefaultAmount = (subType?: string): string => {
+        if (!subType || subscriptionTypes.length === 0) return "";
+        const match = subscriptionTypes.find(t => t.name === subType);
+        if (!match) return "";
+        const price = parseFloat(match.price as unknown as string);
+        return price > 0 ? price.toFixed(2) : "";
+    };
+
     const handleMonthlyRowClick = (student: StudentPaymentStatus) => {
         const fullStudent = allStudents.find(s => s.id === student.id);
         if (!fullStudent) return;
@@ -180,8 +196,9 @@ export default function PaymentsPage() {
             });
         } else {
             setEditingPayment(null);
+            const defaultAmt = getDefaultAmount(fullStudent.subscriptionType);
             setFormData({
-                amount: "",
+                amount: defaultAmt,
                 year: selectedYear,
                 month: selectedMonthNum,
                 paymentDate: new Date().toISOString().split('T')[0]
@@ -192,8 +209,9 @@ export default function PaymentsPage() {
 
     const handleAddPayment = () => {
         setEditingPayment(null);
+        const defaultAmt = selectedStudent ? getDefaultAmount(selectedStudent.subscriptionType) : "";
         setFormData({
-            amount: "",
+            amount: defaultAmt,
             year: new Date().getFullYear().toString(),
             month: String(new Date().getMonth() + 1).padStart(2, '0'),
             paymentDate: new Date().toISOString().split('T')[0]
@@ -270,11 +288,57 @@ export default function PaymentsPage() {
         return new Date(dateString).toLocaleDateString();
     };
 
+    const handleExportStudentList = () => {
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text("Students List", 14, 18);
+        doc.setFontSize(10);
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 26);
+        autoTable(doc, {
+            startY: 32,
+            head: [["ID", "First Name", "Last Name", "Subscription", "Status"]],
+            body: allStudents.map(s => [
+                s.id,
+                s.firstName,
+                s.lastName,
+                (s.subscriptionType || "basic").toUpperCase(),
+                (s.status || "active").toUpperCase()
+            ]),
+            headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: "bold" },
+            alternateRowStyles: { fillColor: [240, 247, 255] },
+            styles: { fontSize: 11 }
+        });
+        doc.save("students.pdf");
+    };
+
+    const handleExportStudentPayments = () => {
+        if (!selectedStudent) return;
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text(`Payments - ${selectedStudent.firstName} ${selectedStudent.lastName}`, 14, 18);
+        doc.setFontSize(10);
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 26);
+        autoTable(doc, {
+            startY: 32,
+            head: [["Amount", "Year-Month", "Payment Date"]],
+            body: studentPayments.map(p => [
+                `$${(typeof p.amount === "string" ? parseFloat(p.amount) : p.amount as number).toFixed(2)}`,
+                `${p.year}-${String(p.month).padStart(2, "0")}`,
+                formatDate(p.paymentDate)
+            ]),
+            headStyles: { fillColor: [39, 174, 96], textColor: 255, fontStyle: "bold" },
+            alternateRowStyles: { fillColor: [240, 255, 245] },
+            styles: { fontSize: 11 }
+        });
+        const name = `${selectedStudent.firstName}_${selectedStudent.lastName}_payments.pdf`;
+        doc.save(name);
+    };
+
     const generateYearOptions = () => {
         const years = [];
         const now = new Date();
         const currentYear = now.getFullYear();
-        for (let i = currentYear; i >= currentYear - 5; i--) {
+        for (let i = currentYear + 5; i >= 2025; i--) {
             years.push(i.toString());
         }
         return years;
@@ -298,6 +362,29 @@ export default function PaymentsPage() {
 
     const paidCount = studentPaymentStatus.filter(s => s.hasPaid).length;
     const unpaidCount = studentPaymentStatus.filter(s => !s.hasPaid).length;
+
+    const handleSendReminder = async (student: StudentPaymentStatus) => {
+        if (!student.email) {
+            alert("This student does not have an email address. Please add one in Students Management.");
+            return;
+        }
+        if (!window.confirm(`Send payment reminder to ${student.firstName} ${student.lastName} (${student.email})?`)) return;
+
+        try {
+            setSendingReminder(student.id);
+            await apiClient.post(`/students/${student.id}/send-payment-reminder`, {
+                month: parseInt(selectedMonthNum),
+                year: parseInt(selectedYear)
+            });
+            alert(`Reminder sent successfully to ${student.email}`);
+        } catch (err: any) {
+            console.error("Error sending reminder:", err);
+            const msg = err?.response?.data?.message || "Failed to send reminder email";
+            alert(msg);
+        } finally {
+            setSendingReminder(null);
+        }
+    };
 
 
     const filteredStudents = studentPaymentStatus.filter((student) => {
@@ -366,25 +453,23 @@ export default function PaymentsPage() {
                                         <label style={{ display: "block", marginBottom: "12px", fontWeight: "700", color: "#2c3e50", fontSize: "16px" }}>
                                             Year
                                         </label>
-                                        <select
+                                        <input
+                                            type="number"
                                             value={selectedYear}
                                             onChange={(e) => setSelectedYear(e.target.value)}
+                                            min="2025"
                                             style={{
                                                 padding: "15px 20px",
                                                 fontSize: "18px",
                                                 fontWeight: "600",
                                                 border: "2px solid #3498db",
                                                 borderRadius: "8px",
-                                                cursor: "pointer",
                                                 fontFamily: "inherit",
                                                 backgroundColor: "#fff",
-                                                minWidth: "150px"
+                                                minWidth: "150px",
+                                                boxSizing: "border-box"
                                             }}
-                                        >
-                                            {generateYearOptions().map(year => (
-                                                <option key={year} value={year}>{year}</option>
-                                            ))}
-                                        </select>
+                                        />
                                     </div>
 
                                     <div>
@@ -465,6 +550,7 @@ export default function PaymentsPage() {
                                                 <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Payment Status</th>
                                                 <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Amount</th>
                                                 <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Payment Date</th>
+                                                <th style={{ padding: "12px", textAlign: "center", fontWeight: "600" }}>Reminder</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -505,6 +591,29 @@ export default function PaymentsPage() {
                                                         <td style={{ padding: "12px" }}>
                                                             {formatDate(student.paymentDate)}
                                                         </td>
+                                                        <td style={{ padding: "12px", textAlign: "center" }}>
+                                                            {!student.hasPaid && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleSendReminder(student);
+                                                                    }}
+                                                                    disabled={sendingReminder === student.id}
+                                                                    style={{
+                                                                        padding: "6px 12px",
+                                                                        fontSize: "12px",
+                                                                        fontWeight: "600",
+                                                                        backgroundColor: sendingReminder === student.id ? "#bdc3c7" : "#e67e22",
+                                                                        color: "white",
+                                                                        border: "none",
+                                                                        borderRadius: "4px",
+                                                                        cursor: sendingReminder === student.id ? "not-allowed" : "pointer"
+                                                                    }}
+                                                                >
+                                                                    {sendingReminder === student.id ? "⏳ Sending..." : "📧 Send Reminder"}
+                                                                </button>
+                                                            )}
+                                                        </td>
                                                     </tr>
                                                 );
                                             })}
@@ -521,6 +630,24 @@ export default function PaymentsPage() {
                             {!selectedStudent ? (
                                 <>
                                     <h2 style={{ margin: "0 0 20px 0", color: "#2c3e50" }}>👥 Select a Student</h2>
+                                    <div style={{ marginBottom: "16px" }}>
+                                        <input
+                                            type="text"
+                                            placeholder="🔍 Search by name or ID..."
+                                            value={manageSearchTerm}
+                                            onChange={(e) => setManageSearchTerm(e.target.value)}
+                                            style={{
+                                                padding: "10px 15px",
+                                                fontSize: "14px",
+                                                width: "100%",
+                                                maxWidth: "400px",
+                                                border: "2px solid #ddd",
+                                                borderRadius: "6px",
+                                                boxSizing: "border-box",
+                                                fontFamily: "inherit"
+                                            }}
+                                        />
+                                    </div>
                                     <div style={{ overflowX: "auto" }}>
                                         <table style={{ width: "100%", borderCollapse: "collapse" }}>
                                             <thead>
@@ -532,37 +659,46 @@ export default function PaymentsPage() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {allStudents.map((student) => (
-                                                    <tr
-                                                        key={student.id}
-                                                        onClick={() => { setSelectedStudent(student); fetchStudentPayments(student.id); }}
-                                                        style={{ borderBottom: "1px solid #ddd", cursor: "pointer" }}
-                                                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f7ff")}
-                                                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
-                                                    >
-                                                        <td style={{ padding: "12px" }}>{student.id}</td>
-                                                        <td style={{ padding: "12px", fontWeight: "500" }}>{student.firstName} {student.lastName}</td>
-                                                        <td style={{ padding: "12px" }}>
-                                                            <span style={{
-                                                                padding: "4px 8px", borderRadius: "4px", fontSize: "12px",
-                                                                backgroundColor: student.subscriptionType === "premium" ? "#f39c12" : "#3498db",
-                                                                color: "white", fontWeight: "600"
-                                                            }}>
-                                                                {(student.subscriptionType || "basic").toUpperCase()}
-                                                            </span>
-                                                        </td>
-                                                        <td style={{ padding: "12px" }}>
-                                                            <span style={{
-                                                                padding: "4px 8px", borderRadius: "4px", fontSize: "12px",
-                                                                backgroundColor: student.status === "active" ? "#d4edda" : "#f8d7da",
-                                                                color: student.status === "active" ? "#155724" : "#721c24",
-                                                                fontWeight: "600"
-                                                            }}>
-                                                                {(student.status || "active").toUpperCase()}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                {allStudents
+                                                    .filter((s) => {
+                                                        const q = manageSearchTerm.trim().toLowerCase();
+                                                        if (!q) return true;
+                                                        return (
+                                                            `${s.firstName} ${s.lastName}`.toLowerCase().includes(q) ||
+                                                            s.id.toString().includes(q)
+                                                        );
+                                                    })
+                                                    .map((student) => (
+                                                        <tr
+                                                            key={student.id}
+                                                            onClick={() => { setSelectedStudent(student); fetchStudentPayments(student.id); }}
+                                                            style={{ borderBottom: "1px solid #ddd", cursor: "pointer" }}
+                                                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f7ff")}
+                                                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
+                                                        >
+                                                            <td style={{ padding: "12px" }}>{student.id}</td>
+                                                            <td style={{ padding: "12px", fontWeight: "500" }}>{student.firstName} {student.lastName}</td>
+                                                            <td style={{ padding: "12px" }}>
+                                                                <span style={{
+                                                                    padding: "4px 8px", borderRadius: "4px", fontSize: "12px",
+                                                                    backgroundColor: student.subscriptionType === "premium" ? "#f39c12" : "#3498db",
+                                                                    color: "white", fontWeight: "600"
+                                                                }}>
+                                                                    {(student.subscriptionType || "basic").toUpperCase()}
+                                                                </span>
+                                                            </td>
+                                                            <td style={{ padding: "12px" }}>
+                                                                <span style={{
+                                                                    padding: "4px 8px", borderRadius: "4px", fontSize: "12px",
+                                                                    backgroundColor: student.status === "active" ? "#d4edda" : "#f8d7da",
+                                                                    color: student.status === "active" ? "#155724" : "#721c24",
+                                                                    fontWeight: "600"
+                                                                }}>
+                                                                    {(student.status || "active").toUpperCase()}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
                                             </tbody>
                                         </table>
                                     </div>
@@ -579,7 +715,14 @@ export default function PaymentsPage() {
                                                 ➕ Add Payment
                                             </button>
                                             <button
-                                                onClick={() => setSelectedStudent(null)}
+                                                onClick={handleExportStudentPayments}
+                                                disabled={studentPayments.length === 0}
+                                                style={{ padding: "10px 20px", fontSize: "14px", fontWeight: "600", backgroundColor: studentPayments.length === 0 ? "#bdc3c7" : "#2980b9", color: "white", border: "none", borderRadius: "6px", cursor: studentPayments.length === 0 ? "not-allowed" : "pointer" }}
+                                            >
+                                                📄 Export to PDF
+                                            </button>
+                                            <button
+                                                onClick={() => { setSelectedStudent(null); setManageSearchTerm(""); }}
                                                 style={{ padding: "10px 20px", fontSize: "14px", fontWeight: "600", backgroundColor: "#95a5a6", color: "white", border: "none", borderRadius: "6px", cursor: "pointer" }}
                                             >
                                                 ← Back
@@ -687,9 +830,11 @@ export default function PaymentsPage() {
                                     <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", color: "#333" }}>
                                         Year
                                     </label>
-                                    <select
+                                    <input
+                                        type="number"
                                         value={formData.year}
                                         onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                                        min="2025"
                                         style={{
                                             width: "100%",
                                             padding: "12px",
@@ -698,11 +843,7 @@ export default function PaymentsPage() {
                                             fontSize: "14px",
                                             boxSizing: "border-box"
                                         }}
-                                    >
-                                        {generateYearOptions().map(year => (
-                                            <option key={year} value={year}>{year}</option>
-                                        ))}
-                                    </select>
+                                    />
                                 </div>
 
                                 <div style={{ flex: 1 }}>

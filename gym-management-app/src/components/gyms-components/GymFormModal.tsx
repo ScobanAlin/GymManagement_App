@@ -11,14 +11,12 @@ export default function GymFormModal({ gym, onClose, onSave }: Props) {
     const [form, setForm] = useState({
         name: gym?.name ?? "",
         location: gym?.location ?? "",
-        capacity: gym?.capacity?.toString() ?? "",
     });
 
     useEffect(() => {
         setForm({
             name: gym?.name ?? "",
             location: gym?.location ?? "",
-            capacity: gym?.capacity?.toString() ?? "",
         });
     }, [gym]);
 
@@ -27,7 +25,6 @@ export default function GymFormModal({ gym, onClose, onSave }: Props) {
         onSave({
             name: form.name,
             location: form.location,
-            capacity: Number(form.capacity),
         }, gym?.id);
     };
 
@@ -66,16 +63,7 @@ export default function GymFormModal({ gym, onClose, onSave }: Props) {
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label>Capacity</label>
-                        <input
-                            type="number"
-                            placeholder="e.g. 50"
-                            value={form.capacity}
-                            onChange={(e) => setForm({ ...form, capacity: e.target.value })}
-                            required
-                        />
-                    </div>
+
                 </div>
 
                 <div className="modal-footer">

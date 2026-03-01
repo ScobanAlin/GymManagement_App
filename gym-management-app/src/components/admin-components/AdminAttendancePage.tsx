@@ -15,14 +15,14 @@ interface Class {
 }
 
 interface AttendanceRecord {
-    id: number;
+    id: number | null;
     classId: number;
     studentId: number;
     studentFirstName: string;
     studentLastName: string;
     cnp: string;
-    attended: boolean;
-    recordedAt: string;
+    attended: boolean | null;
+    recordedAt: string | null;
 }
 
 export default function AdminAttendancePage() {
@@ -140,27 +140,27 @@ export default function AdminAttendancePage() {
         }
     };
 
-    const updateAttendanceStatus = async (recordId: number, attended: boolean) => {
-        const currentRecord = attendanceRecords.find((record) => record.id === recordId);
+    const updateAttendanceStatus = async (classId: number, studentId: number, attended: boolean) => {
+        const currentRecord = attendanceRecords.find((record) => record.studentId === studentId);
         if (!currentRecord || currentRecord.attended === attended) return;
 
         try {
-            setSavingAttendance((prev) => ({ ...prev, [recordId]: true }));
+            setSavingAttendance((prev) => ({ ...prev, [studentId]: true }));
 
-            await apiClient.put(`/attendance/${recordId}`, {
-                attended,
-            });
+            if (attended) {
+                await apiClient.post(`/attendance/classes/${classId}/students/${studentId}/present`);
+            } else {
+                await apiClient.post(`/attendance/classes/${classId}/students/${studentId}/absent`);
+            }
 
-            setAttendanceRecords((prev) =>
-                prev.map((record) =>
-                    record.id === recordId ? { ...record, attended } : record
-                )
-            );
+            // Refresh attendance records for the class
+            const res = await apiClient.get(`/attendance/classes/${classId}`);
+            setAttendanceRecords(res.data);
         } catch (err) {
             console.error("Error saving attendance:", err);
             alert("Failed to save attendance");
         } finally {
-            setSavingAttendance((prev) => ({ ...prev, [recordId]: false }));
+            setSavingAttendance((prev) => ({ ...prev, [studentId]: false }));
         }
     };
 
@@ -442,7 +442,7 @@ export default function AdminAttendancePage() {
                                                 <tbody>
                                                     {attendanceRecords.map((record, idx) => (
                                                         <tr
-                                                            key={record.id}
+                                                            key={record.studentId}
                                                             style={{
                                                                 backgroundColor: idx % 2 === 0 ? "transparent" : "rgba(0,0,0,0.02)",
                                                                 borderBottom: "1px solid var(--border-color)",
@@ -456,35 +456,35 @@ export default function AdminAttendancePage() {
                                                             <td style={{ padding: "1rem", textAlign: "center" }}>
                                                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
                                                                     <button
-                                                                        onClick={() => updateAttendanceStatus(record.id, true)}
-                                                                        disabled={savingAttendance[record.id]}
+                                                                        onClick={() => updateAttendanceStatus(selectedClassId!, record.studentId, true)}
+                                                                        disabled={savingAttendance[record.studentId]}
                                                                         style={{
                                                                             padding: "0.5rem",
-                                                                            backgroundColor: record.attended ? "#2ecc71" : "transparent",
-                                                                            color: record.attended ? "white" : "var(--text-primary)",
-                                                                            border: `2px solid ${record.attended ? "#2ecc71" : "var(--border-color)"}`,
+                                                                            backgroundColor: record.attended === true ? "#2ecc71" : "transparent",
+                                                                            color: record.attended === true ? "white" : "var(--text-primary)",
+                                                                            border: `2px solid ${record.attended === true ? "#2ecc71" : "var(--border-color)"}`,
                                                                             borderRadius: "4px",
-                                                                            cursor: savingAttendance[record.id] ? "not-allowed" : "pointer",
+                                                                            cursor: savingAttendance[record.studentId] ? "not-allowed" : "pointer",
                                                                             fontWeight: 600,
                                                                             fontSize: "0.85rem",
-                                                                            opacity: savingAttendance[record.id] ? 0.7 : 1,
+                                                                            opacity: savingAttendance[record.studentId] ? 0.7 : 1,
                                                                         }}
                                                                     >
                                                                         ✓ Present
                                                                     </button>
                                                                     <button
-                                                                        onClick={() => updateAttendanceStatus(record.id, false)}
-                                                                        disabled={savingAttendance[record.id]}
+                                                                        onClick={() => updateAttendanceStatus(selectedClassId!, record.studentId, false)}
+                                                                        disabled={savingAttendance[record.studentId]}
                                                                         style={{
                                                                             padding: "0.5rem",
-                                                                            backgroundColor: !record.attended ? "#e74c3c" : "transparent",
-                                                                            color: !record.attended ? "white" : "var(--text-primary)",
-                                                                            border: `2px solid ${!record.attended ? "#e74c3c" : "var(--border-color)"}`,
+                                                                            backgroundColor: record.attended === false ? "#e74c3c" : "transparent",
+                                                                            color: record.attended === false ? "white" : "var(--text-primary)",
+                                                                            border: `2px solid ${record.attended === false ? "#e74c3c" : "var(--border-color)"}`,
                                                                             borderRadius: "4px",
-                                                                            cursor: savingAttendance[record.id] ? "not-allowed" : "pointer",
+                                                                            cursor: savingAttendance[record.studentId] ? "not-allowed" : "pointer",
                                                                             fontWeight: 600,
                                                                             fontSize: "0.85rem",
-                                                                            opacity: savingAttendance[record.id] ? 0.7 : 1,
+                                                                            opacity: savingAttendance[record.studentId] ? 0.7 : 1,
                                                                         }}
                                                                     >
                                                                         ✗ Absent

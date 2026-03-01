@@ -14,6 +14,7 @@ export default function Sidebar() {
     { to: "/coaches", icon: "🧑‍🏫", label: "Coaches" },
     { to: "/gyms", icon: "🏋️‍♀️", label: "Gyms" },
     { to: "/payments", icon: "💳", label: "Payments" },
+    { to: "/subscription-types", icon: "🏷️", label: "Subscriptions" },
     { to: "/notifications", icon: "🔔", label: "Notifications" },
     { to: "/reports", icon: "📊", label: "Reports" },
   ];

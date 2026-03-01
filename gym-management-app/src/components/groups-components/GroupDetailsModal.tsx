@@ -56,6 +56,14 @@ const DAYS = [
 ];
 const DAY_NAME = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+/** Formats a Date as YYYY-MM-DD using local time (avoids UTC shift from toISOString). */
+const toLocalISODate = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
 /** Returns the ISO date of the next occurrence of a JS weekday (0=Sun…6=Sat) from today. */
 const nextWeekdayDate = (weekday: number): string => {
   const today = new Date();
@@ -64,7 +72,7 @@ const nextWeekdayDate = (weekday: number): string => {
   if (daysUntil <= 0) daysUntil += 7;
   const next = new Date(today);
   next.setDate(today.getDate() + daysUntil);
-  return next.toISOString().split("T")[0];
+  return toLocalISODate(next);
 };
 
 const endOfCurrentYear = (): string => `${new Date().getFullYear()}-12-31`;
@@ -187,7 +195,7 @@ export default function GroupDetailsModal({
   const removeSlot = async (slot: ScheduleSlot) => {
     const dayName = DAY_NAME[slot.weekday];
     if (!window.confirm(
-      `Remove all future ${dayName} ${slot.beginTime.slice(0, 5)}–${slot.endTime.slice(0, 5)} classes at ${slot.gymName}?`
+      `Remove all ${dayName} ${slot.beginTime.slice(0, 5)}–${slot.endTime.slice(0, 5)} classes at ${slot.gymName} from tomorrow onwards?`
     )) return;
     await apiClient.delete(`/groups/${group.id}/schedule-slot`, {
       data: { weekday: slot.weekday, beginTime: slot.beginTime, endTime: slot.endTime, gymId: slot.gymId },

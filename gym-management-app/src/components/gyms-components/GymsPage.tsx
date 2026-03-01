@@ -8,7 +8,6 @@ export type Gym = {
     id: number;
     name: string;
     location: string;
-    capacity: number;
 };
 
 export default function GymsPage() {
@@ -75,10 +74,7 @@ export default function GymsPage() {
                                     <p style={{ margin: "0 0 4px", fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Location</p>
                                     <p style={{ margin: 0, fontWeight: 500 }}>📍 {detailGym.location}</p>
                                 </div>
-                                <div>
-                                    <p style={{ margin: "0 0 4px", fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Capacity</p>
-                                    <p style={{ margin: 0, fontWeight: 500 }}>💪 {detailGym.capacity} people</p>
-                                </div>
+
                             </div>
                         </div>
                         <div className="modal-footer" style={{ justifyContent: "space-between" }}>

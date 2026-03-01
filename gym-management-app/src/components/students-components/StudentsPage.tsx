@@ -4,12 +4,14 @@ import apiClient from "../../services/apiClient";
 import StudentList from "./StudentList";
 import StudentDetailsModal from "./StudentDetailsModal";
 import AddStudentModal from "./AddStudentModel"
+import EditStudentModal from "./EditStudentModal"
 export type Student = {
   id: number;
   firstName: string;
   lastName: string;
   cnp?: string;
   dateOfBirth?: string;
+  email?: string;
   subscriptionType?: string;
   status?: string;
   groupId?: number | null;
@@ -28,6 +30,7 @@ export default function StudentsPage() {
   const [selectedGroup, setSelectedGroup] = useState<number | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -88,6 +91,12 @@ export default function StudentsPage() {
   const handleDeleteStudent = async (id: number) => {
     await apiClient.delete(`/students/${id}`);
     await loadStudents();
+  };
+
+  const handleEditStudent = (student: Student) => {
+    setSelectedStudent(student);
+    setDetailsModalOpen(false);
+    setEditModalOpen(true);
   };
 
   /** Reload the student list AND refresh the selected student in the modal */
@@ -163,6 +172,7 @@ export default function StudentsPage() {
           student={selectedStudent}
           onClose={() => setDetailsModalOpen(false)}
           onDelete={handleDeleteStudent}
+          onEdit={handleEditStudent}
           groups={groups}
           reload={reloadWithSelectedStudent}
         />
@@ -171,8 +181,24 @@ export default function StudentsPage() {
           onClose={() => setAddModalOpen(false)}
           groups={groups}
           onSubmit={async (data) => {
-            await apiClient.post("/students", data);
-            setAddModalOpen(false);
+            try {
+              await apiClient.post("/students", data);
+              setAddModalOpen(false);
+              await loadStudents();
+            } catch (err: any) {
+              const msg = err?.response?.data?.message || "Failed to add student.";
+              alert(msg);
+            }
+          }}
+        />
+        <EditStudentModal
+          isOpen={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          student={selectedStudent}
+          onSubmit={async (data) => {
+            if (!selectedStudent) return;
+            await apiClient.put(`/students/${selectedStudent.id}`, data);
+            setEditModalOpen(false);
             await loadStudents();
           }}
         />

@@ -23,7 +23,7 @@ export default function GymCard({ gym, onOpen }: Props) {
             </div>
             <div className="card-body">
                 <p style={{ margin: "0.5rem 0", color: "var(--text-secondary)" }}>📍 {gym.location}</p>
-                <p style={{ margin: "0.5rem 0", color: "var(--text-secondary)" }}>💪 Capacity: {gym.capacity}</p>
+
             </div>
         </div>
     );

@@ -12,6 +12,7 @@ import Reports from "./pages/Reports";
 import MyGroups from "./pages/MyGroups";
 import Attendance from "./pages/Attendance";
 import Observations from "./pages/Observations";
+import SubscriptionTypes from "./pages/SubscriptionTypes";
 
 export default function App() {
     return (
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="/my-groups" element={<MyGroups />} />
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/observations" element={<Observations />} />
+            <Route path="/subscription-types" element={<SubscriptionTypes />} />
         </Routes >
     );
 }

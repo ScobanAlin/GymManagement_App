@@ -20,7 +20,6 @@ interface PaymentRecord {
 interface AttendanceRecord {
     id: number;
     attended: boolean;
-    notes?: string;
     recordedAt: string;
     classId: number;
     classDate: string;
@@ -170,9 +169,9 @@ export default function ReportsPage() {
             });
         } else {
             filename = `attendance_report_${new Date().toISOString().split("T")[0]}.csv`;
-            csvContent = "ID,Student Name,CNP,Group,Gym,Class Date,Time,Attended,Notes\n";
+            csvContent = "ID,Student Name,CNP,Group,Gym,Class Date,Time,Attended\n";
             attendanceData.forEach((record) => {
-                csvContent += `${record.id},"${record.studentFirstName} ${record.studentLastName}",${record.cnp},${record.groupName},"${record.gymName} (${record.gymLocation})",${record.classDate},"${record.beginTime} - ${record.endTime}",${record.attended ? "Yes" : "No"},"${record.notes || ""}"\n`;
+                csvContent += `${record.id},"${record.studentFirstName} ${record.studentLastName}",${record.cnp},${record.groupName},"${record.gymName} (${record.gymLocation})",${record.classDate},"${record.beginTime} - ${record.endTime}",${record.attended ? "Yes" : "No"}\n`;
             });
         }
 
@@ -531,7 +530,6 @@ export default function ReportsPage() {
                                             <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Class Date</th>
                                             <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Time</th>
                                             <th style={{ padding: "12px", textAlign: "center", fontWeight: "600" }}>Attended</th>
-                                            <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Notes</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -562,9 +560,6 @@ export default function ReportsPage() {
                                                     }}>
                                                         {record.attended ? "✓ YES" : "✗ NO"}
                                                     </span>
-                                                </td>
-                                                <td style={{ padding: "12px", fontSize: "13px", color: "#666" }}>
-                                                    {record.notes || "-"}
                                                 </td>
                                             </tr>
                                         ))}

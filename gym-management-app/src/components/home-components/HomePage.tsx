@@ -3,6 +3,74 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../Sidebar";
 import apiClient from "../../services/apiClient";
 
+/* ───────────── shared quick-action card ───────────── */
+function ActionCard({
+    icon,
+    label,
+    description,
+    accent,
+    onClick,
+}: {
+    icon: string;
+    label: string;
+    description: string;
+    accent: string;
+    onClick: () => void;
+}) {
+    const [hovered, setHovered] = useState(false);
+    return (
+        <div
+            role="button"
+            tabIndex={0}
+            onClick={onClick}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{
+                background: hovered ? accent : "var(--card-background, #fff)",
+                border: `2px solid ${accent}`,
+                borderRadius: "14px",
+                padding: "1.5rem 1.25rem",
+                cursor: "pointer",
+                textAlign: "center",
+                transition: "background 0.18s, transform 0.15s, box-shadow 0.18s",
+                transform: hovered ? "translateY(-3px)" : "none",
+                boxShadow: hovered ? `0 8px 24px ${accent}55` : "0 2px 8px rgba(0,0,0,0.07)",
+                userSelect: "none",
+            }}
+        >
+            <div style={{ fontSize: "2.4rem", marginBottom: "0.65rem" }}>{icon}</div>
+            <div style={{
+                fontWeight: 700, fontSize: "1rem", marginBottom: "0.3rem",
+                color: hovered ? "#fff" : "var(--text-primary)",
+            }}>{label}</div>
+            <div style={{
+                fontSize: "0.8rem",
+                color: hovered ? "rgba(255,255,255,0.82)" : "var(--text-secondary)",
+            }}>{description}</div>
+        </div>
+    );
+}
+
+/* ───────────── stat card ───────────── */
+function StatCard({
+    icon, value, label, accent, loading, alert,
+}: {
+    icon: string; value: number; label: string; accent: string; loading: boolean; alert?: boolean;
+}) {
+    return (
+        <div className="card-container" style={{ borderLeft: `5px solid ${accent}`, display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "1.6rem" }}>{icon}</span>
+                <span style={{ fontSize: "2rem", fontWeight: 800, color: alert ? "#e74c3c" : accent }}>
+                    {loading ? "…" : value}
+                </span>
+            </div>
+            <div style={{ fontWeight: 600, fontSize: "0.92rem", color: "var(--text-primary)" }}>{label}</div>
+        </div>
+    );
+}
+
 interface Student {
     id: number;
 }
@@ -45,6 +113,7 @@ export default function HomePage() {
     const [studentsCount, setStudentsCount] = useState(0);
     const [groupsCount, setGroupsCount] = useState(0);
     const [coachesCount, setCoachesCount] = useState(0);
+    const [gymsCount, setGymsCount] = useState(0);
     const [todayClassesCount, setTodayClassesCount] = useState(0);
     const [pendingPaymentsCount, setPendingPaymentsCount] = useState(0);
     const [recentNotifications, setRecentNotifications] = useState<NotificationItem[]>([]);
@@ -92,10 +161,11 @@ export default function HomePage() {
                     setGroupsCount(0);
                     setCoachesCount(0);
                 } else {
-                    const [studentsRes, groupsRes, coachesRes, unpaidRes] = await Promise.all([
+                    const [studentsRes, groupsRes, coachesRes, gymsRes, unpaidRes] = await Promise.all([
                         apiClient.get("/students"),
                         apiClient.get("/groups"),
                         apiClient.get("/coaches"),
+                        apiClient.get("/gyms"),
                         apiClient.get("/payments/unpaid", {
                             params: { year: currentMonth.year, month: currentMonth.month },
                         }),
@@ -104,6 +174,7 @@ export default function HomePage() {
                     setStudentsCount((studentsRes.data as Student[]).length);
                     setGroupsCount((groupsRes.data as Group[]).length);
                     setCoachesCount((coachesRes.data as Coach[]).length);
+                    setGymsCount((gymsRes.data as unknown[]).length);
                     setPendingPaymentsCount((unpaidRes.data as UnpaidStudent[]).length);
                 }
 
@@ -143,6 +214,25 @@ export default function HomePage() {
         }
     };
 
+    const markNotificationAsUnread = async (notification: NotificationItem) => {
+        if (!notification.isRead) return { ...notification, isRead: false };
+
+        try {
+            await apiClient.put(`/notifications/${notification.id}/read`, {
+                isRead: false,
+            });
+
+            const updated = { ...notification, isRead: false };
+            setSelectedNotification(updated);
+            await fetchNotifications();
+            return updated;
+        } catch (error) {
+            console.error("Error updating notification:", error);
+            alert("Failed to update notification");
+            return notification;
+        }
+    };
+
     const openNotificationModal = async (notification: NotificationItem) => {
         const updated = await markNotificationAsRead(notification);
         setSelectedNotification(updated);
@@ -171,399 +261,178 @@ export default function HomePage() {
         return `${notification.coachFirstName} ${notification.coachLastName || ""}`.trim();
     };
 
+    const greetingHour = new Date().getHours();
+    const greeting = greetingHour < 12 ? "Good morning" : greetingHour < 18 ? "Good afternoon" : "Good evening";
+
     return (
         <div className="page-layout">
             <Sidebar />
 
             <main className="page-content">
-                {/* Page Header */}
-                <div className="page-header">
-                    <h1>🏋️‍♂️ Welcome to Gym Management</h1>
+                {/* ── Header ── */}
+                <div className="page-header" style={{ marginBottom: "1.75rem" }}>
+                    <div>
+                        <h1 style={{ marginBottom: "0.25rem" }}>
+                            {isAdmin ? "🏋️‍♂️ Admin Dashboard" : "🏠 Dashboard"}
+                        </h1>
+                        <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "0.95rem" }}>
+                            {greeting}, <strong>{user.first_name || "User"}</strong> —{" "}
+                            {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                        </p>
+                    </div>
                 </div>
 
-                {/* Dashboard Overview */}
-                <section style={{ marginBottom: "2rem" }}>
-                    <h2 style={{ marginBottom: "1.5rem", color: "var(--text-primary)" }}>Dashboard Overview</h2>
-
-                    {/* Stats Cards Grid */}
-                    <div className="cards-grid">
-                        {isAdmin && (
-                            <>
-                                <div className="card-container">
-                                    <div className="card-header">
-                                        <h3 className="card-title">👥 Total Students</h3>
-                                        <span style={{ fontSize: "1.5rem" }}>{loading ? "..." : studentsCount}</span>
-                                    </div>
-                                    <p style={{ margin: "0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-                                        Active members in the system
-                                    </p>
-                                </div>
-
-                                <div className="card-container">
-                                    <div className="card-header">
-                                        <h3 className="card-title">💪 Training Groups</h3>
-                                        <span style={{ fontSize: "1.5rem" }}>{loading ? "..." : groupsCount}</span>
-                                    </div>
-                                    <p style={{ margin: "0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-                                        Active training sessions
-                                    </p>
-                                </div>
-
-                                <div className="card-container">
-                                    <div className="card-header">
-                                        <h3 className="card-title">🧑‍🏫 Coaches</h3>
-                                        <span style={{ fontSize: "1.5rem" }}>{loading ? "..." : coachesCount}</span>
-                                    </div>
-                                    <p style={{ margin: "0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-                                        Professional trainers
-                                    </p>
-                                </div>
-                            </>
-                        )}
-
-                        {isCoach && (
-                            <div className="card-container">
-                                <div className="card-header">
-                                    <h3 className="card-title">🗓️ Today's Classes</h3>
-                                    <span style={{ fontSize: "1.5rem" }}>{loading ? "..." : todayClassesCount}</span>
-                                </div>
-                                <p style={{ margin: "0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-                                    Classes scheduled for today
-                                </p>
+                {/* ══════════ ADMIN DASHBOARD ══════════ */}
+                {isAdmin && (
+                    <>
+                        {/* Stat Cards */}
+                        <section style={{ marginBottom: "2.5rem" }}>
+                            <h2 style={{ marginBottom: "1rem", color: "var(--text-primary)", fontSize: "1.05rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                Overview
+                            </h2>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: "1rem" }}>
+                                <StatCard icon="👩‍🎓" value={studentsCount} label="Total Students" accent="#3498db" loading={loading} />
+                                <StatCard icon="💪" value={groupsCount} label="Training Groups" accent="#9b59b6" loading={loading} />
+                                <StatCard icon="🧑‍🏫" value={coachesCount} label="Coaches" accent="#1abc9c" loading={loading} />
+                                <StatCard icon="🏋️‍♀️" value={gymsCount} label="Gyms" accent="#e67e22" loading={loading} />
+                                <StatCard icon="💳" value={pendingPaymentsCount} label="Unpaid This Month" accent="#e74c3c" loading={loading} alert />
+                                <StatCard icon="🔔" value={recentNotifications.length} label="Unread Notifications" accent="#f39c12" loading={loading} />
                             </div>
-                        )}
+                        </section>
 
-                        <div className="card-container">
-                            <div className="card-header">
-                                <h3 className="card-title">💳 Pending Payments</h3>
-                                <span style={{ fontSize: "1.5rem", color: "var(--warning-color)" }}>
-                                    {loading ? "..." : pendingPaymentsCount}
-                                </span>
+                        {/* Quick Actions */}
+                        <section style={{ marginBottom: "2.5rem" }}>
+                            <h2 style={{ marginBottom: "1rem", color: "var(--text-primary)", fontSize: "1.05rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                Quick Actions
+                            </h2>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "1rem" }}>
+                                <ActionCard icon="👩‍🎓" label="Students" description="Manage members" accent="#3498db" onClick={() => navigate("/students")} />
+                                <ActionCard icon="💪" label="Groups" description="Training groups" accent="#9b59b6" onClick={() => navigate("/groups")} />
+                                <ActionCard icon="🗓️" label="Attendance" description="Track sessions" accent="#27ae60" onClick={() => navigate("/attendance")} />
+                                <ActionCard icon="🧑‍🏫" label="Coaches" description="Staff directory" accent="#1abc9c" onClick={() => navigate("/coaches")} />
+                                <ActionCard icon="🏋️‍♀️" label="Gyms" description="Locations & capacity" accent="#e67e22" onClick={() => navigate("/gyms")} />
+                                <ActionCard icon="💳" label="Payments" description="Collect memberships" accent="#e74c3c" onClick={() => navigate("/payments")} />
+                                <ActionCard icon="🔔" label="Notifications" description="Alerts & messages" accent="#f39c12" onClick={() => navigate("/notifications")} />
+                                <ActionCard icon="📊" label="Reports" description="Analytics & insights" accent="#8e44ad" onClick={() => navigate("/reports")} />
                             </div>
-                            <p style={{ margin: "0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-                                Students unpaid this month
-                            </p>
-                        </div>
+                        </section>
 
-                        {isCoach && (
-                            <div className="card-container">
-                                <div className="card-header">
-                                    <h3 className="card-title">🔔 Unread Notifications</h3>
-                                    <span style={{ fontSize: "1.5rem" }}>{loading ? "..." : recentNotifications.length}</span>
-                                </div>
-                                <p style={{ margin: "0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-                                    Items requiring your attention
-                                </p>
+                        {/* Recent Notifications */}
+                        <section>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                                <h2 style={{ margin: 0, color: "var(--text-primary)", fontSize: "1.05rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                    Recent Notifications
+                                </h2>
+                                {recentNotifications.length > 0 && (
+                                    <button className="btn-secondary" style={{ fontSize: "0.82rem", padding: "4px 14px" }} onClick={() => navigate("/notifications")}>
+                                        View all →
+                                    </button>
+                                )}
                             </div>
-                        )}
-                    </div>
-                </section>
-
-                {/* Quick Actions */}
-                <section style={{ marginBottom: "2rem" }}>
-                    <h2 style={{ marginBottom: "1.5rem", color: "var(--text-primary)" }}>Quick Actions</h2>
-
-                    {isCoach ? (
-                        <div className="cards-grid">
-                            <div
-                                className="card-container"
-                                onClick={() => navigate("/my-groups")}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(event) => {
-                                    if (event.key === "Enter" || event.key === " ") navigate("/my-groups");
-                                }}
-                                style={{ cursor: "pointer", textAlign: "center", paddingTop: "2rem", paddingBottom: "2rem" }}
-                            >
-                                <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>💪</div>
-                                <h3 style={{ margin: "0 0 0.5rem 0" }}>My Groups</h3>
-                                <p style={{ margin: "0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>View your assigned groups</p>
-                            </div>
-
-                            <div
-                                className="card-container"
-                                onClick={() => navigate("/attendance")}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(event) => {
-                                    if (event.key === "Enter" || event.key === " ") navigate("/attendance");
-                                }}
-                                style={{ cursor: "pointer", textAlign: "center", paddingTop: "2rem", paddingBottom: "2rem" }}
-                            >
-                                <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>🗓️</div>
-                                <h3 style={{ margin: "0 0 0.5rem 0" }}>Attendance</h3>
-                                <p style={{ margin: "0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>Manage class attendance</p>
-                            </div>
-
-                            <div
-                                className="card-container"
-                                onClick={() => navigate("/payments")}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(event) => {
-                                    if (event.key === "Enter" || event.key === " ") navigate("/payments");
-                                }}
-                                style={{ cursor: "pointer", textAlign: "center", paddingTop: "2rem", paddingBottom: "2rem" }}
-                            >
-                                <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>💰</div>
-                                <h3 style={{ margin: "0 0 0.5rem 0" }}>Payments</h3>
-                                <p style={{ margin: "0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>Register monthly payments</p>
-                            </div>
-
-                            <div
-                                className="card-container"
-                                onClick={() => navigate("/observations")}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(event) => {
-                                    if (event.key === "Enter" || event.key === " ") navigate("/observations");
-                                }}
-                                style={{ cursor: "pointer", textAlign: "center", paddingTop: "2rem", paddingBottom: "2rem" }}
-                            >
-                                <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>📝</div>
-                                <h3 style={{ margin: "0 0 0.5rem 0" }}>Observations</h3>
-                                <p style={{ margin: "0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>Add and review observations</p>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="cards-grid">
-                            <div
-                                className="card-container"
-                                onClick={() => navigate("/students")}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(event) => {
-                                    if (event.key === "Enter" || event.key === " ") navigate("/students");
-                                }}
-                                style={{ cursor: "pointer", textAlign: "center", paddingTop: "2rem", paddingBottom: "2rem" }}
-                            >
-                                <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>👤</div>
-                                <h3 style={{ margin: "0 0 0.5rem 0" }}>Add Student</h3>
-                                <p style={{ margin: "0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>Register new member</p>
-                            </div>
-
-                            <div
-                                className="card-container"
-                                onClick={() => navigate("/groups")}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(event) => {
-                                    if (event.key === "Enter" || event.key === " ") navigate("/groups");
-                                }}
-                                style={{ cursor: "pointer", textAlign: "center", paddingTop: "2rem", paddingBottom: "2rem" }}
-                            >
-                                <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>📋</div>
-                                <h3 style={{ margin: "0 0 0.5rem 0" }}>View Groups</h3>
-                                <p style={{ margin: "0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>Manage training groups</p>
-                            </div>
-
-                            <div
-                                className="card-container"
-                                onClick={() => navigate("/payments")}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(event) => {
-                                    if (event.key === "Enter" || event.key === " ") navigate("/payments");
-                                }}
-                                style={{ cursor: "pointer", textAlign: "center", paddingTop: "2rem", paddingBottom: "2rem" }}
-                            >
-                                <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>💰</div>
-                                <h3 style={{ margin: "0 0 0.5rem 0" }}>Process Payments</h3>
-                                <p style={{ margin: "0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>Collect memberships</p>
-                            </div>
-
-                            <div
-                                className="card-container"
-                                onClick={() => navigate("/reports")}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(event) => {
-                                    if (event.key === "Enter" || event.key === " ") navigate("/reports");
-                                }}
-                                style={{ cursor: "pointer", textAlign: "center", paddingTop: "2rem", paddingBottom: "2rem" }}
-                            >
-                                <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>📊</div>
-                                <h3 style={{ margin: "0 0 0.5rem 0" }}>View Reports</h3>
-                                <p style={{ margin: "0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>Analytics & insights</p>
-                            </div>
-                        </div>
-                    )}
-                </section>
-
-                {/* Recent Activity */}
-                <section>
-                    <h2 style={{ marginBottom: "1.5rem", color: "var(--text-primary)" }}>Recent Activity</h2>
-
-                    <div className="card-container">
-                        {loading ? (
-                            <div style={{ padding: "1rem", textAlign: "center", color: "var(--text-secondary)" }}>
-                                <p>Loading recent activity...</p>
-                            </div>
-                        ) : recentNotifications.length === 0 ? (
-                            <div style={{ padding: "1rem", textAlign: "center", color: "var(--text-secondary)" }}>
-                                <p>No recent activity yet</p>
-                            </div>
-                        ) : (
-                            <div style={{ display: "grid", gap: "10px", maxHeight: "360px", overflowY: "auto", paddingRight: "4px" }}>
-                                {recentNotifications.map((notification) => (
-                                    <div
-                                        key={notification.id}
-                                        role="button"
-                                        tabIndex={0}
-                                        onClick={() => openNotificationModal(notification)}
-                                        onKeyDown={(event) => {
-                                            if (event.key === "Enter" || event.key === " ") {
-                                                openNotificationModal(notification);
-                                            }
-                                        }}
-                                        style={{
-                                            padding: "12px 16px",
-                                            borderBottom: "1px solid var(--border-color)",
-                                            borderLeft: notification.isRead ? "4px solid #d0d7de" : "4px solid #2ecc71",
-                                            backgroundColor: notification.isRead ? "#f7f8f9" : "#ffffff",
-                                            borderRadius: "8px",
-                                            cursor: "pointer",
-                                        }}
-                                    >
-                                        <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", marginBottom: "6px" }}>
-                                            <div style={{ fontWeight: notification.isRead ? 500 : 700 }}>{notification.description}</div>
-                                            <span
+                            <div className="card-container" style={{ padding: 0, overflow: "hidden" }}>
+                                {loading ? (
+                                    <p style={{ padding: "1.25rem", color: "var(--text-secondary)", textAlign: "center" }}>Loading…</p>
+                                ) : recentNotifications.length === 0 ? (
+                                    <p style={{ padding: "1.25rem", color: "var(--text-secondary)", textAlign: "center" }}>🎉 No unread notifications</p>
+                                ) : (
+                                    <div style={{ maxHeight: "360px", overflowY: "auto" }}>
+                                        {recentNotifications.map((n, idx) => (
+                                            <div
+                                                key={n.id}
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openNotificationModal(n)}
+                                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") openNotificationModal(n); }}
+                                                onMouseEnter={(e) => (e.currentTarget.style.background = "#f4f6f8")}
+                                                onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
                                                 style={{
-                                                    padding: "2px 10px",
-                                                    borderRadius: "999px",
-                                                    fontSize: "11px",
-                                                    fontWeight: 700,
-                                                    backgroundColor: notification.isRead ? "#e9ecef" : "#e7f9ef",
-                                                    color: notification.isRead ? "#6c757d" : "#1b7f4b",
-                                                    whiteSpace: "nowrap",
+                                                    padding: "14px 18px",
+                                                    borderBottom: idx < recentNotifications.length - 1 ? "1px solid var(--border-color)" : "none",
+                                                    borderLeft: "4px solid #2ecc71",
+                                                    cursor: "pointer",
+                                                    background: "#fff",
+                                                    transition: "background 0.15s",
                                                 }}
                                             >
-                                                {notification.isRead ? "READ" : "UNREAD"}
-                                            </span>
-                                        </div>
-                                        <div style={{ fontSize: "13px", color: "#555", marginBottom: "4px" }}>
-                                            Student: <strong>{getStudentName(notification)}</strong>
-                                            {notification.groupName ? ` • Group: ${notification.groupName}` : ""}
-                                            {` • Coach: ${getCoachName(notification)}`}
-                                        </div>
-                                        <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
-                                            {formatDateTime(notification.createdAt)}
-                                        </div>
+                                                <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", marginBottom: "4px" }}>
+                                                    <div style={{ fontWeight: 700, fontSize: "0.93rem" }}>{n.description}</div>
+                                                    <span style={{ padding: "2px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, whiteSpace: "nowrap", backgroundColor: "#e7f9ef", color: "#1b7f4b" }}>
+                                                        UNREAD
+                                                    </span>
+                                                </div>
+                                                <div style={{ fontSize: "12.5px", color: "#555", marginBottom: "2px" }}>
+                                                    Student: <strong>{getStudentName(n)}</strong>
+                                                    {n.groupName ? ` • Group: ${n.groupName}` : ""}
+                                                    {` • Coach: ${getCoachName(n)}`}
+                                                </div>
+                                                <div style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>{formatDateTime(n.createdAt)}</div>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
+                                )}
                             </div>
-                        )}
-                    </div>
-                </section>
+                        </section>
+                    </>
+                )}
 
+                {/* ══════════ COACH DASHBOARD ══════════ */}
+                {isCoach && (
+                    <>
+                        <section style={{ marginBottom: "2rem" }}>
+                            <h2 style={{ marginBottom: "1rem", color: "var(--text-primary)", fontSize: "1.05rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Overview</h2>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: "1rem" }}>
+                                <StatCard icon="🗓️" value={todayClassesCount} label="Today's Classes" accent="#27ae60" loading={loading} />
+                                <StatCard icon="💳" value={pendingPaymentsCount} label="Unpaid This Month" accent="#e74c3c" loading={loading} alert />
+                                <StatCard icon="🔔" value={recentNotifications.length} label="Unread Notifications" accent="#f39c12" loading={loading} />
+                            </div>
+                        </section>
+
+                        <section style={{ marginBottom: "2rem" }}>
+                            <h2 style={{ marginBottom: "1rem", color: "var(--text-primary)", fontSize: "1.05rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Quick Actions</h2>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "1rem" }}>
+                                <ActionCard icon="💪" label="My Groups" description="View assigned groups" accent="#9b59b6" onClick={() => navigate("/my-groups")} />
+                                <ActionCard icon="🗓️" label="Attendance" description="Manage sessions" accent="#27ae60" onClick={() => navigate("/attendance")} />
+                                <ActionCard icon="💳" label="Payments" description="Register payments" accent="#e74c3c" onClick={() => navigate("/payments")} />
+                                <ActionCard icon="📝" label="Observations" description="Notes & feedback" accent="#3498db" onClick={() => navigate("/observations")} />
+                            </div>
+                        </section>
+                    </>
+                )}
+
+                {/* ══════════ NOTIFICATION DETAIL MODAL ══════════ */}
                 {selectedNotification && (
-                    <div
-                        onClick={() => setSelectedNotification(null)}
-                        style={{
-                            position: "fixed",
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            backgroundColor: "rgba(0,0,0,0.5)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            zIndex: 1000,
-                        }}
-                    >
-                        <div
-                            onClick={(event) => event.stopPropagation()}
-                            style={{
-                                backgroundColor: "white",
-                                borderRadius: "12px",
-                                padding: "28px",
-                                maxWidth: "640px",
-                                width: "90%",
-                                boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
-                            }}
-                        >
-                            <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", marginBottom: "14px" }}>
-                                <h2 style={{ margin: 0, color: "#2c3e50" }}>Notification Details</h2>
-                                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end" }}>
-                                    <button
-                                        onClick={async () => {
-                                            const updated = await markNotificationAsRead(selectedNotification);
-                                            setSelectedNotification(updated);
-                                        }}
-                                        style={{
-                                            backgroundColor: selectedNotification.isRead ? "#3498db" : "#27ae60",
-                                            color: "white",
-                                            border: "none",
-                                            padding: "6px 12px",
-                                            borderRadius: "4px",
-                                            cursor: "pointer",
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        Mark Read
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(selectedNotification)}
-                                        style={{
-                                            backgroundColor: "#e74c3c",
-                                            color: "white",
-                                            border: "none",
-                                            padding: "6px 12px",
-                                            borderRadius: "4px",
-                                            cursor: "pointer",
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        Delete
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setSelectedNotification(null);
-                                            navigate("/notifications");
-                                        }}
-                                        style={{
-                                            backgroundColor: "#8e44ad",
-                                            color: "white",
-                                            border: "none",
-                                            padding: "6px 12px",
-                                            borderRadius: "4px",
-                                            cursor: "pointer",
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        Open Notifications
-                                    </button>
-                                    <button
-                                        onClick={() => setSelectedNotification(null)}
-                                        style={{
-                                            backgroundColor: "#95a5a6",
-                                            color: "white",
-                                            border: "none",
-                                            padding: "6px 12px",
-                                            borderRadius: "4px",
-                                            cursor: "pointer",
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        ✕
-                                    </button>
+                    <div className="modal-overlay" onClick={() => setSelectedNotification(null)}>
+                        <div className="modal-content" style={{ maxWidth: "560px" }} onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h2>🔔 Notification</h2>
+                                <button className="modal-close" onClick={() => setSelectedNotification(null)}>✕</button>
+                            </div>
+                            <div className="modal-body" style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                                <p style={{ margin: 0, fontSize: "1rem", fontWeight: 600 }}>{selectedNotification.description}</p>
+                                <div style={{ fontSize: "14px", color: "#555" }}>
+                                    Student: <strong>{getStudentName(selectedNotification)}</strong>
+                                    {selectedNotification.groupName && <span> • Group: <strong>{selectedNotification.groupName}</strong></span>}
+                                </div>
+                                <div style={{ fontSize: "14px", color: "#555" }}>Coach: <strong>{getCoachName(selectedNotification)}</strong></div>
+                                <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{formatDateTime(selectedNotification.createdAt)}</div>
+                            </div>
+                            <div className="modal-footer" style={{ justifyContent: "flex-end" }}>
+                                <div style={{ display: "flex", gap: "8px" }}>
+                                    <button className="btn-secondary" onClick={() => { setSelectedNotification(null); navigate("/notifications"); }}>Open Page</button>
+                                    {!selectedNotification.isRead ? (
+                                        <button className="btn-primary" onClick={async () => { const u = await markNotificationAsRead(selectedNotification); setSelectedNotification(u); }}>
+                                            ✅ Mark as Read
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={async () => { const u = await markNotificationAsUnread(selectedNotification); setSelectedNotification(u); }}
+                                            style={{ backgroundColor: "#f39c12", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600" }}
+                                        >
+                                            🔔 Mark as Unread
+                                        </button>
+                                    )}
                                 </div>
                             </div>
-
-                            <p style={{ margin: "0 0 12px 0", fontSize: "16px", color: "#2c3e50" }}>
-                                {selectedNotification.description}
-                            </p>
-                            <p style={{ margin: "0 0 8px 0", color: "#555", fontSize: "14px" }}>
-                                Student: <strong>{getStudentName(selectedNotification)}</strong>
-                                {selectedNotification.groupName ? ` • Group: ${selectedNotification.groupName}` : ""}
-                            </p>
-                            <p style={{ margin: "0 0 8px 0", color: "#555", fontSize: "14px" }}>
-                                Coach: <strong>{getCoachName(selectedNotification)}</strong>
-                            </p>
-                            <p style={{ margin: "0", color: "#888", fontSize: "12px" }}>
-                                {formatDateTime(selectedNotification.createdAt)}
-                            </p>
                         </div>
                     </div>
                 )}

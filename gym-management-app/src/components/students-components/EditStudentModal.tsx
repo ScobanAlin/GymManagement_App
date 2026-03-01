@@ -1,44 +1,51 @@
 import React, { useState, useEffect } from "react";
-import { Group } from "./StudentsPage";
+import { Student } from "./StudentsPage";
 
 type Props = {
     isOpen: boolean;
     onClose: () => void;
-    groups: Group[];
+    student: Student | null;
     onSubmit: (data: {
         firstName: string;
         lastName: string;
         cnp: string;
         dateOfBirth: string;
         email: string;
-        status: string;
-        groupId: number | null;
     }) => void;
 };
 
-export default function AddStudentModal({ isOpen, onClose, groups, onSubmit }: Props) {
+export default function EditStudentModal({ isOpen, onClose, student, onSubmit }: Props) {
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [cnp, setCnp] = useState("");
     const [dateOfBirth, setDob] = useState("");
     const [email, setEmail] = useState("");
-    const [status, setStatus] = useState("active");
-    const [groupId, setGroupId] = useState<number | "none">("none");
 
-    // Reset form when modal opens
+    // Pre-fill form with student data when modal opens
     useEffect(() => {
-        if (isOpen) {
-            setFirstName("");
-            setLastName("");
-            setCnp("");
-            setDob("");
-            setEmail("");
-            setStatus("active");
-            setGroupId("none");
+        if (isOpen && student) {
+            setFirstName(student.firstName || "");
+            setLastName(student.lastName || "");
+            setCnp(student.cnp || "");
+            // Format date for input (YYYY-MM-DD)
+            if (student.dateOfBirth) {
+                const d = new Date(student.dateOfBirth);
+                if (!Number.isNaN(d.getTime())) {
+                    const yyyy = d.getFullYear();
+                    const mm = String(d.getMonth() + 1).padStart(2, "0");
+                    const dd = String(d.getDate()).padStart(2, "0");
+                    setDob(`${yyyy}-${mm}-${dd}`);
+                } else {
+                    setDob(student.dateOfBirth);
+                }
+            } else {
+                setDob("");
+            }
+            setEmail(student.email || "");
         }
-    }, [isOpen]);
+    }, [isOpen, student]);
 
-    if (!isOpen) return null;
+    if (!isOpen || !student) return null;
 
     const handleSubmit = () => {
         if (!firstName || !lastName || !cnp || !dateOfBirth) {
@@ -52,8 +59,6 @@ export default function AddStudentModal({ isOpen, onClose, groups, onSubmit }: P
             cnp,
             dateOfBirth,
             email,
-            status,
-            groupId: groupId === "none" ? null : groupId
         });
     };
 
@@ -61,7 +66,7 @@ export default function AddStudentModal({ isOpen, onClose, groups, onSubmit }: P
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
-                    <h2>👤 Add New Student</h2>
+                    <h2>✏️ Edit Student</h2>
                     <button
                         className="modal-close"
                         onClick={onClose}
@@ -72,10 +77,10 @@ export default function AddStudentModal({ isOpen, onClose, groups, onSubmit }: P
                 </div>
 
                 <div className="modal-body">
-                    {/* FORM */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
 
                         <div className="form-group">
+                            <label>First Name</label>
                             <input
                                 placeholder="First Name"
                                 value={firstName}
@@ -85,6 +90,7 @@ export default function AddStudentModal({ isOpen, onClose, groups, onSubmit }: P
                         </div>
 
                         <div className="form-group">
+                            <label>Last Name</label>
                             <input
                                 placeholder="Last Name"
                                 value={lastName}
@@ -94,6 +100,7 @@ export default function AddStudentModal({ isOpen, onClose, groups, onSubmit }: P
                         </div>
 
                         <div className="form-group">
+                            <label>CNP</label>
                             <input
                                 placeholder="CNP"
                                 value={cnp}
@@ -104,6 +111,7 @@ export default function AddStudentModal({ isOpen, onClose, groups, onSubmit }: P
                         </div>
 
                         <div className="form-group">
+                            <label>Email</label>
                             <input
                                 placeholder="Email"
                                 type="email"
@@ -122,48 +130,15 @@ export default function AddStudentModal({ isOpen, onClose, groups, onSubmit }: P
                                 style={{ width: "100%" }}
                             />
                         </div>
-
-                        <div className="form-group">
-                            <label>Status</label>
-                            <select
-                                value={status}
-                                onChange={(e) => setStatus(e.target.value)}
-                                style={{ width: "100%" }}
-                            >
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                        </div>
-
-                        <div className="form-group">
-                            <label>Assign to a Group (optional)</label>
-                            <select
-                                value={groupId}
-                                onChange={(e) =>
-                                    setGroupId(
-                                        e.target.value === "none" ? "none" : Number(e.target.value)
-                                    )
-                                }
-                                style={{ width: "100%" }}
-                            >
-                                <option value="none">No group</option>
-                                {groups.map((g) => (
-                                    <option key={g.id} value={g.id}>
-                                        {g.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
                     </div>
                 </div>
 
-                {/* ACTION BUTTONS */}
                 <div className="modal-footer">
                     <button onClick={onClose} className="btn-secondary">
                         Cancel
                     </button>
                     <button onClick={handleSubmit} className="btn-primary">
-                        ✓ Save Student
+                        ✓ Save Changes
                     </button>
                 </div>
             </div>

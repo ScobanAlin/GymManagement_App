@@ -5,6 +5,7 @@ import apiClient from "../../services/apiClient";
 type Payment = {
     id: number;
     amount: number;
+    year: number;
     month: string;
     payment_date: string;
 };
@@ -37,6 +38,7 @@ type Props = {
     student: Student | null;
     groups: Group[];
     onDelete: (id: number) => void;
+    onEdit: (student: Student) => void;
     reload: () => void; // reload students list after edits
 };
 
@@ -46,13 +48,16 @@ export default function StudentDetailsModal({
     student,
     groups,
     onDelete,
+    onEdit,
     reload,
 }: Props) {
     const [activeTab, setActiveTab] = useState("details");
     const [payments, setPayments] = useState<Payment[]>([]);
     const [groupId, setGroupId] = useState<number | null>(null);
     const [subscriptionType, setSubscriptionType] = useState("normal");
+    const [availableSubTypes, setAvailableSubTypes] = useState<{ id: number; name: string; price: number }[]>([]);
     const [status, setStatus] = useState("active");
+    const [email, setEmail] = useState("");
     const [attendanceReports, setAttendanceReports] = useState<AttendanceReportRecord[]>([]);
     const [attendanceLoading, setAttendanceLoading] = useState(false);
     const [attendanceError, setAttendanceError] = useState<string | null>(null);
@@ -72,6 +77,12 @@ export default function StudentDetailsModal({
         setGroupId(student.groupId ?? null);
         setSubscriptionType(student.subscriptionType ?? "normal");
         setStatus(student.status ?? "active");
+        setEmail(student.email ?? "");
+
+        // Fetch subscription types
+        apiClient.get("/subscription-types").then((res) => {
+            setAvailableSubTypes(res.data);
+        }).catch(() => { });
 
         // Fetch payments
         apiClient.get(`/students/${student.id}/payments`).then((res) => {
@@ -214,6 +225,18 @@ export default function StudentDetailsModal({
         reload();
     };
 
+    const handleSaveSubscription = async () => {
+        await apiClient.post(`/students/${student.id}/subscription`, { subscriptionType });
+        alert("Subscription updated!");
+        reload();
+    };
+
+    const handleSaveEmail = async () => {
+        await apiClient.post(`/students/${student.id}/email`, { email });
+        alert("Email updated!");
+        reload();
+    };
+
     const markNotificationAsRead = async (notification: StudentNotification) => {
         if (notification.isRead) return { ...notification, isRead: true };
 
@@ -285,7 +308,6 @@ export default function StudentDetailsModal({
                     >
                         {[
                             "details",
-                            "assign",
                             "status",
                             "reports",
                             "attendance",
@@ -308,7 +330,6 @@ export default function StudentDetailsModal({
                                 }}
                             >
                                 {tab === "details" && "👤 Details"}
-                                {tab === "assign" && "🔄 Assign"}
                                 {tab === "status" && "❄️ Status"}
                                 {tab === "reports" && "📄 Reports"}
                                 {tab === "attendance" && "🗓️ Attendance"}
@@ -340,15 +361,17 @@ export default function StudentDetailsModal({
                                     </span>
                                 </div>
                                 <div style={{ gridColumn: "1 / -1" }}>
+                                    <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", margin: "0 0 0.25rem 0" }}>Email</p>
+                                    <p style={{ fontWeight: "600", margin: "0 0 1rem 0" }}>{student.email || "Not set"}</p>
+                                </div>
+                                <div style={{ gridColumn: "1 / -1" }}>
                                     <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", margin: "0 0 0.25rem 0" }}>Group</p>
-                                    <p style={{ fontWeight: "600", margin: "0" }}>{student.groupName || "Not assigned"}</p>
+                                    <p style={{ fontWeight: "600", margin: "0 0 1rem 0" }}>{student.groupName || "Not assigned"}</p>
                                 </div>
                             </div>
-                        </div>
-                    )}
 
-                    {activeTab === "assign" && (
-                        <div>
+                            <hr style={{ margin: "1.5rem 0", borderColor: "var(--border-color)" }} />
+
                             <div className="form-group">
                                 <label>Assign to Group</label>
                                 <select
@@ -366,6 +389,34 @@ export default function StudentDetailsModal({
                             </div>
                             <button onClick={handleAssignGroup} className="btn-primary">
                                 ✓ Save Assignment
+                            </button>
+
+                            <hr style={{ margin: "1.5rem 0", borderColor: "var(--border-color)" }} />
+
+                            <div className="form-group">
+                                <label>Subscription Type</label>
+                                <select
+                                    value={subscriptionType}
+                                    onChange={(e) => setSubscriptionType(e.target.value)}
+                                    style={{ width: "100%" }}
+                                >
+                                    {availableSubTypes.length > 0
+                                        ? availableSubTypes.map((t) => (
+                                            <option key={t.id} value={t.name}>
+                                                {t.name.toUpperCase()} &mdash; {parseFloat(t.price as unknown as string).toFixed(2)} RON/month
+                                            </option>
+                                        ))
+                                        : (
+                                            <>
+                                                <option value="normal">NORMAL</option>
+                                                <option value="premium">PREMIUM</option>
+                                            </>
+                                        )
+                                    }
+                                </select>
+                            </div>
+                            <button onClick={handleSaveSubscription} className="btn-primary">
+                                ✓ Save Subscription
                             </button>
                         </div>
                     )}
@@ -554,15 +605,15 @@ export default function StudentDetailsModal({
                                     <table>
                                         <thead>
                                             <tr>
-                                                <th style={{ padding: "1rem" }}>Month</th>
+                                                <th style={{ padding: "1rem" }}>Year - Month</th>
                                                 <th style={{ padding: "1rem" }}>Amount</th>
-                                                <th style={{ padding: "1rem" }}>Date</th>
+                                                <th style={{ padding: "1rem" }}>Payment Date</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {payments.map((p) => (
                                                 <tr key={p.id}>
-                                                    <td style={{ padding: "1rem" }}>{p.month}</td>
+                                                    <td style={{ padding: "1rem" }}>{p.year} - {p.month}</td>
                                                     <td style={{ padding: "1rem", fontWeight: "600" }}>{p.amount} RON</td>
                                                     <td style={{ padding: "1rem" }}>{formatPaymentDateTime(p.payment_date)}</td>
                                                 </tr>
@@ -580,7 +631,14 @@ export default function StudentDetailsModal({
                     <button onClick={handleDelete} className="btn-danger btn-sm">
                         🗑 Delete
                     </button>
-                    <button onClick={onClose} className="btn-primary">
+                    <button
+                        onClick={() => onEdit(student)}
+                        className="btn-secondary btn-sm"
+                        style={{ marginLeft: "0.5rem" }}
+                    >
+                        ✏️ Edit
+                    </button>
+                    <button onClick={onClose} className="btn-primary" style={{ marginLeft: "auto" }}>
                         Close
                     </button>
                 </div>
