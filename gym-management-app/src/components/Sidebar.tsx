@@ -1,7 +1,8 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 
 export default function Sidebar() {
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const role = user?.role || "guest";
 
@@ -39,7 +40,7 @@ export default function Sidebar() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.href = "/login";
+    navigate("/login");
   };
 
   return (
