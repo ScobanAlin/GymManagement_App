@@ -10,7 +10,6 @@ export default function Register() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [password2, setPassword2] = useState("");
-    const [role, setRole] = useState("coach");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -39,7 +38,7 @@ export default function Register() {
                 last_name: lastName,
                 email,
                 password,
-                role,
+                role: "coach",
             });
 
             setSuccess(true);
@@ -48,7 +47,6 @@ export default function Register() {
             setEmail("");
             setPassword("");
             setPassword2("");
-            setRole("coach");
         } catch (err: any) {
             console.error("Registration error:", err);
             const message = err.response?.data?.message || "Registration failed. Please try again.";
@@ -70,7 +68,7 @@ export default function Register() {
 
                     <div className="login-box">
                         <h2>Create Account</h2>
-                        <p className="auth-subtitle">Fill in your details to register.</p>
+                        <p className="auth-subtitle">Fill in your details to register as a coach.</p>
 
                         <form className="auth-form" onSubmit={handleSubmit}>
                             <input
@@ -113,14 +111,6 @@ export default function Register() {
                                 onChange={(e) => setPassword2(e.target.value)}
                                 required
                             />
-                            <select
-                                className="auth-input"
-                                value={role}
-                                onChange={(e) => setRole(e.target.value)}
-                            >
-                                <option value="coach">Coach</option>
-                                <option value="admin">Admin</option>
-                            </select>
 
                             <button className="auth-button" type="submit" disabled={loading}>
                                 {loading ? "Registering..." : "Create Account"}

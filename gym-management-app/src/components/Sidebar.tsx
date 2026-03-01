@@ -1,8 +1,11 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 
 export default function Sidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const role = user?.role || "guest";
 
@@ -37,44 +40,78 @@ export default function Sidebar() {
   if (role === "admin") navLinks = adminLinks;
   else if (role === "coach") navLinks = coachLinks;
 
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 1024) {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    setIsOpen(false);
     navigate("/login");
   };
 
+  const displayName =
+    role !== "guest"
+      ? `${role.charAt(0).toUpperCase() + role.slice(1)} : ${user.last_name || ""} ${user.first_name || ""}`.trim()
+      : "Welcome, Guest";
+
   return (
-    <aside className="sidebar">
-      <div className="sidebar-header">
-        <h2>
-          🏋️‍♂️ Gym<span>Manager</span>
-        </h2>
+    <>
+      <button
+        className="sidebar-menu-toggle"
+        onClick={() => setIsOpen((open) => !open)}
+        aria-label="Toggle navigation menu"
+      >
+        ☰
+      </button>
 
-        <p style={{ fontSize: "0.9rem", color: "#aaa" }}>
-          {role !== "guest" ? role.charAt(0).toUpperCase() + role.slice(1) + ' : ' + user.last_name + " " + user.first_name : "Welcome, Guest"}
-        </p>
+      <div
+        className={`sidebar-overlay${isOpen ? " open" : ""}`}
+        onClick={() => setIsOpen(false)}
+      />
 
-      </div>
+      <aside className={`sidebar${isOpen ? " open" : ""}`}>
+        <div className="sidebar-header">
+          <h2>
+            🏋️‍♂️ Gym<span>Manager</span>
+          </h2>
 
-      <nav className="sidebar-nav">
-        {navLinks.map((link) => (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            end
-            className={({ isActive }) =>
-              "sidebar-link" + (isActive ? " active" : "")
-            }
-          >
-            <span className="icon">{link.icon}</span> {link.label}
-          </NavLink>
-        ))}
-      </nav>
-      {role !== "guest" && (
-        <button className="sidebar-logout" onClick={handleLogout}>
-          🚪 Logout
-        </button>
-      )}
-    </aside>
+          <p style={{ fontSize: "0.9rem", color: "#aaa" }}>{displayName}</p>
+        </div>
+
+        <nav className="sidebar-nav">
+          {navLinks.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end
+              className={({ isActive }) =>
+                "sidebar-link" + (isActive ? " active" : "")
+              }
+              onClick={() => setIsOpen(false)}
+            >
+              <span className="icon">{link.icon}</span> {link.label}
+            </NavLink>
+          ))}
+        </nav>
+        {role !== "guest" && (
+          <button className="sidebar-logout" onClick={handleLogout}>
+            🚪 Logout
+          </button>
+        )}
+      </aside>
+    </>
   );
 }
