@@ -421,24 +421,30 @@ const StudentsTab = ({ students, allGroups, removeStudent, assignStudent, setSel
               </td>
             </tr>
           ) : (
-            students.map((s: any) => (
-              <tr key={s.id}>
-                <td style={{ padding: "1rem" }}>{s.firstName} {s.lastName}</td>
-                <td style={{ padding: "1rem" }}>
-                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                    <button className="btn-danger btn-sm" onClick={() => removeStudent(s.id)}>Remove</button>
-                    <select
-                      onChange={(e) => setSelectedGroupForReassign(Number(e.target.value))}
-                      style={{ padding: "0.4rem", border: "1px solid var(--border-color)", borderRadius: "6px", fontSize: "0.9rem" }}
-                    >
-                      <option value="">Move to…</option>
-                      {allGroups.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}
-                    </select>
-                    <button className="btn-secondary btn-sm" onClick={() => assignStudent(s.id)}>Move</button>
-                  </div>
-                </td>
-              </tr>
-            ))
+            [...students]
+              .sort((a: any, b: any) => {
+                const aName = `${a.lastName || ""} ${a.firstName || ""}`.trim();
+                const bName = `${b.lastName || ""} ${b.firstName || ""}`.trim();
+                return aName.localeCompare(bName, undefined, { sensitivity: "base" });
+              })
+              .map((s: any) => (
+                <tr key={s.id}>
+                  <td style={{ padding: "1rem" }}>{s.firstName} {s.lastName}</td>
+                  <td style={{ padding: "1rem" }}>
+                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                      <button className="btn-danger btn-sm" onClick={() => removeStudent(s.id)}>Remove</button>
+                      <select
+                        onChange={(e) => setSelectedGroupForReassign(Number(e.target.value))}
+                        style={{ padding: "0.4rem", border: "1px solid var(--border-color)", borderRadius: "6px", fontSize: "0.9rem" }}
+                      >
+                        <option value="">Move to…</option>
+                        {allGroups.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                      </select>
+                      <button className="btn-secondary btn-sm" onClick={() => assignStudent(s.id)}>Move</button>
+                    </div>
+                  </td>
+                </tr>
+              ))
           )}
         </tbody>
       </table>

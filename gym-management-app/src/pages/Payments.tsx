@@ -24,7 +24,7 @@ export default function Payments() {
     }
 
     // Default to coach page if role is "coach", otherwise admin page
-    if (role === "coach") {
+    if ((role || "").toLowerCase() === "coach") {
         return <CoachPaymentsPage />;
     }
 

@@ -220,7 +220,14 @@ export default function CoachPaymentsPage() {
     ];
 
     const formatCurrency = (amount: number) =>
-        new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+        new Intl.NumberFormat("ro-RO", { style: "currency", currency: "RON" }).format(amount);
+
+    const formatSubscriptionType = (subscriptionType?: string) => {
+        const normalized = (subscriptionType || "normal").toLowerCase();
+        if (normalized === "premium") return "Premium";
+        if (normalized === "normal") return "Normal";
+        return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+    };
 
     const paidCount = students.filter(s => s.isPaid).length;
     const unpaidCount = students.length - paidCount;
@@ -305,7 +312,7 @@ export default function CoachPaymentsPage() {
                                                         {student.firstName} {student.lastName}
                                                     </p>
                                                     <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                                                        {student.subscriptionType}
+                                                        {formatSubscriptionType(student.subscriptionType)}
                                                     </p>
                                                 </div>
                                                 <span style={{
@@ -342,7 +349,7 @@ export default function CoachPaymentsPage() {
                                             👤 {selectedStudent.firstName} {selectedStudent.lastName}
                                         </h3>
                                         <p style={{ margin: "0 0 0.5rem 0" }}>
-                                            <strong>Subscription:</strong> {selectedStudent.subscriptionType}
+                                            <strong>Subscription:</strong> {formatSubscriptionType(selectedStudent.subscriptionType)}
                                         </p>
                                         <p style={{ margin: 0 }}>
                                             <strong>Status:</strong>

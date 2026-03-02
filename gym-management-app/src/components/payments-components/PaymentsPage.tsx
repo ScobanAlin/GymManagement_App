@@ -39,6 +39,17 @@ interface Student {
 type TabType = "monthly" | "history";
 
 export default function PaymentsPage() {
+    const currentRole = (() => {
+        const userRaw = localStorage.getItem("user");
+        if (!userRaw) return "";
+        try {
+            return (JSON.parse(userRaw)?.role || "").toLowerCase();
+        } catch {
+            return "";
+        }
+    })();
+
+    const canSendReminder = currentRole === "admin";
     const [activeTab, setActiveTab] = useState<TabType>("monthly");
     const [studentPaymentStatus, setStudentPaymentStatus] = useState<StudentPaymentStatus[]>([]);
     const [allPayments, setAllPayments] = useState<Payment[]>([]);
@@ -278,9 +289,21 @@ export default function PaymentsPage() {
     };
 
     const formatCurrency = (amount: number | string | undefined) => {
-        if (!amount) return "-";
+        if (amount === undefined || amount === null || amount === "") return "-";
         const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-        return `$${numAmount.toFixed(2)}`;
+        return new Intl.NumberFormat("ro-RO", {
+            style: "currency",
+            currency: "RON",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(numAmount);
+    };
+
+    const formatSubscriptionType = (subscriptionType?: string) => {
+        const normalized = (subscriptionType || "normal").toLowerCase();
+        if (normalized === "premium") return "Premium";
+        if (normalized === "normal") return "Normal";
+        return normalized.charAt(0).toUpperCase() + normalized.slice(1);
     };
 
     const formatDate = (dateString: string | undefined) => {
@@ -322,7 +345,7 @@ export default function PaymentsPage() {
             startY: 32,
             head: [["Amount", "Year-Month", "Payment Date"]],
             body: studentPayments.map(p => [
-                `$${(typeof p.amount === "string" ? parseFloat(p.amount) : p.amount as number).toFixed(2)}`,
+                formatCurrency(p.amount),
                 `${p.year}-${String(p.month).padStart(2, "0")}`,
                 formatDate(p.paymentDate)
             ]),
@@ -550,7 +573,9 @@ export default function PaymentsPage() {
                                                 <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Payment Status</th>
                                                 <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Amount</th>
                                                 <th style={{ padding: "12px", textAlign: "left", fontWeight: "600" }}>Payment Date</th>
-                                                <th style={{ padding: "12px", textAlign: "center", fontWeight: "600" }}>Reminder</th>
+                                                {canSendReminder && (
+                                                    <th style={{ padding: "12px", textAlign: "center", fontWeight: "600" }}>Reminder</th>
+                                                )}
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -579,7 +604,7 @@ export default function PaymentsPage() {
                                                                 color: "white",
                                                                 fontWeight: "600"
                                                             }}>
-                                                                {(student.subscriptionType || "basic").toUpperCase()}
+                                                                {formatSubscriptionType(student.subscriptionType)}
                                                             </span>
                                                         </td>
                                                         <td style={{ padding: "12px", fontWeight: "600", color: statusColor }}>
@@ -591,29 +616,31 @@ export default function PaymentsPage() {
                                                         <td style={{ padding: "12px" }}>
                                                             {formatDate(student.paymentDate)}
                                                         </td>
-                                                        <td style={{ padding: "12px", textAlign: "center" }}>
-                                                            {!student.hasPaid && (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleSendReminder(student);
-                                                                    }}
-                                                                    disabled={sendingReminder === student.id}
-                                                                    style={{
-                                                                        padding: "6px 12px",
-                                                                        fontSize: "12px",
-                                                                        fontWeight: "600",
-                                                                        backgroundColor: sendingReminder === student.id ? "#bdc3c7" : "#e67e22",
-                                                                        color: "white",
-                                                                        border: "none",
-                                                                        borderRadius: "4px",
-                                                                        cursor: sendingReminder === student.id ? "not-allowed" : "pointer"
-                                                                    }}
-                                                                >
-                                                                    {sendingReminder === student.id ? "⏳ Sending..." : "📧 Send Reminder"}
-                                                                </button>
-                                                            )}
-                                                        </td>
+                                                        {canSendReminder && (
+                                                            <td style={{ padding: "12px", textAlign: "center" }}>
+                                                                {!student.hasPaid && (
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleSendReminder(student);
+                                                                        }}
+                                                                        disabled={sendingReminder === student.id}
+                                                                        style={{
+                                                                            padding: "6px 12px",
+                                                                            fontSize: "12px",
+                                                                            fontWeight: "600",
+                                                                            backgroundColor: sendingReminder === student.id ? "#bdc3c7" : "#e67e22",
+                                                                            color: "white",
+                                                                            border: "none",
+                                                                            borderRadius: "4px",
+                                                                            cursor: sendingReminder === student.id ? "not-allowed" : "pointer"
+                                                                        }}
+                                                                    >
+                                                                        {sendingReminder === student.id ? "⏳ Sending..." : "📧 Send Reminder"}
+                                                                    </button>
+                                                                )}
+                                                            </td>
+                                                        )}
                                                     </tr>
                                                 );
                                             })}
@@ -684,7 +711,7 @@ export default function PaymentsPage() {
                                                                     backgroundColor: student.subscriptionType === "premium" ? "#f39c12" : "#3498db",
                                                                     color: "white", fontWeight: "600"
                                                                 }}>
-                                                                    {(student.subscriptionType || "basic").toUpperCase()}
+                                                                    {formatSubscriptionType(student.subscriptionType)}
                                                                 </span>
                                                             </td>
                                                             <td style={{ padding: "12px" }}>
