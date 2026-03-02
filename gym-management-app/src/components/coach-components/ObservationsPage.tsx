@@ -277,7 +277,7 @@ export default function ObservationsPage() {
                                         <option value="">-- Choose a student --</option>
                                         {students.map(student => (
                                             <option key={student.id} value={student.id}>
-                                                {student.firstName} {student.lastName}
+                                                {student.lastName} {student.firstName}
                                             </option>
                                         ))}
                                     </select>
@@ -445,7 +445,7 @@ export default function ObservationsPage() {
                                     <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "1rem", marginBottom: "1rem", alignItems: "start" }}>
                                         <div>
                                             <h4 style={{ margin: "0 0 0.5rem 0", color: "var(--text-primary)" }}>
-                                                {obs.studentFirstName} {obs.studentLastName}
+                                                {obs.studentLastName} {obs.studentFirstName}
                                             </h4>
                                             <p style={{ margin: "0 0 0.5rem 0", fontSize: "0.9rem", color: "var(--text-secondary)" }}>
                                                 <strong>Group:</strong> {obs.groupName || "-"}

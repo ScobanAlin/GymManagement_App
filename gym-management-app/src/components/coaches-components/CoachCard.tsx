@@ -9,7 +9,7 @@ type Props = {
 };
 
 export default function CoachCard({ coach, type, onActivate, onDelete }: Props) {
-    const fullName = `${coach.first_name} ${coach.last_name}`;
+    const fullName = `${coach.last_name} ${coach.first_name}`;
 
     return (
         <div className="card-container">

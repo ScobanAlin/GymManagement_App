@@ -390,7 +390,7 @@ export default function MyGroupsPage() {
                                                 }}
                                             >
                                                 <p style={{ margin: "0 0 0.25rem 0", fontWeight: 600 }}>
-                                                    {student.firstName} {student.lastName}
+                                                    {student.lastName} {student.firstName}
                                                 </p>
                                                 <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.8rem", color: "#4338ca", fontWeight: 600 }}>
                                                     Click for details →
@@ -537,7 +537,7 @@ export default function MyGroupsPage() {
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                                     <div>
                                         <p style={{ margin: "0 0 0.25rem 0", color: "var(--text-secondary)", fontSize: "0.85rem" }}>Name</p>
-                                        <p style={{ margin: 0, fontWeight: 600 }}>{selectedStudent.firstName} {selectedStudent.lastName}</p>
+                                        <p style={{ margin: 0, fontWeight: 600 }}>{selectedStudent.lastName} {selectedStudent.firstName}</p>
                                     </div>
                                     <div>
                                         <p style={{ margin: "0 0 0.25rem 0", color: "var(--text-secondary)", fontSize: "0.85rem" }}>CNP</p>
@@ -610,7 +610,7 @@ export default function MyGroupsPage() {
                                                 <tbody>
                                                     {classAttendance.map((row) => (
                                                         <tr key={row.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
-                                                            <td style={{ padding: "0.75rem" }}>{row.studentFirstName} {row.studentLastName}</td>
+                                                            <td style={{ padding: "0.75rem" }}>{row.studentLastName} {row.studentFirstName}</td>
                                                             <td style={{ padding: "0.75rem", textAlign: "center" }}>
                                                                 <span style={{
                                                                     padding: "0.2rem 0.5rem",

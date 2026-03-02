@@ -16,7 +16,7 @@ export default function StudentCard({ student, onClick }: Props) {
             }}
         >
             <h3 style={{ margin: "0 0 0.5rem 0", color: "var(--text-primary)" }}>
-                {student.firstName} {student.lastName}
+                {student.lastName} {student.firstName}
             </h3>
             {student.cnp && (
                 <p style={{ margin: "0.25rem 0", fontSize: "0.9rem", color: "var(--text-secondary)" }}>

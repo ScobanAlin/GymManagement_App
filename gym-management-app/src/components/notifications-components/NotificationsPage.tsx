@@ -196,10 +196,10 @@ export default function NotificationsPage() {
                         <div style={{ display: "grid", gap: "16px" }}>
                             {sortedNotifications.map((notification) => {
                                 const studentName = notification.studentFirstName
-                                    ? `${notification.studentFirstName} ${notification.studentLastName || ""}`.trim()
+                                    ? `${notification.studentLastName || ""} ${notification.studentFirstName}`.trim()
                                     : "Unknown student";
                                 const coachName = notification.coachFirstName
-                                    ? `${notification.coachFirstName} ${notification.coachLastName || ""}`.trim()
+                                    ? `${notification.coachLastName || ""} ${notification.coachFirstName}`.trim()
                                     : "System";
 
                                 return (
@@ -368,11 +368,11 @@ export default function NotificationsPage() {
 
                             <p style={{ margin: 0, color: "#555", fontSize: "13px" }}>
                                 {selectedNotification.studentFirstName
-                                    ? `Student: ${selectedNotification.studentFirstName} ${selectedNotification.studentLastName || ""}`.trim()
+                                    ? `Student: ${selectedNotification.studentLastName || ""} ${selectedNotification.studentFirstName}`.trim()
                                     : "Student: Unknown"}
                                 {selectedNotification.groupName ? ` • Group: ${selectedNotification.groupName}` : ""}
                                 {selectedNotification.coachFirstName
-                                    ? ` • Coach: ${selectedNotification.coachFirstName} ${selectedNotification.coachLastName || ""}`.trim()
+                                    ? ` • Coach: ${selectedNotification.coachLastName || ""} ${selectedNotification.coachFirstName}`.trim()
                                     : " • Coach: System"}
                             </p>
                             <p style={{ margin: "8px 0 0 0", color: "#888", fontSize: "12px" }}>

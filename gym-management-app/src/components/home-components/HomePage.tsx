@@ -253,12 +253,12 @@ export default function HomePage() {
 
     const getStudentName = (notification: NotificationItem) => {
         if (!notification.studentFirstName) return "Unknown student";
-        return `${notification.studentFirstName} ${notification.studentLastName || ""}`.trim();
+        return `${notification.studentLastName || ""} ${notification.studentFirstName}`.trim();
     };
 
     const getCoachName = (notification: NotificationItem) => {
         if (!notification.coachFirstName) return "System";
-        return `${notification.coachFirstName} ${notification.coachLastName || ""}`.trim();
+        return `${notification.coachLastName || ""} ${notification.coachFirstName}`.trim();
     };
 
     const greetingHour = new Date().getHours();

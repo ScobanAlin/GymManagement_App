@@ -165,13 +165,13 @@ export default function ReportsPage() {
             filename = `payments_report_${new Date().toISOString().split("T")[0]}.csv`;
             csvContent = "ID,Student Name,CNP,Subscription,Amount,Year,Month,Payment Date\n";
             paymentsData.forEach((record) => {
-                csvContent += `${record.id},"${record.studentFirstName} ${record.studentLastName}",${record.cnp},${record.subscriptionType},${record.amount},${record.year},${record.month},${record.paymentDate}\n`;
+                csvContent += `${record.id},"${record.studentLastName} ${record.studentFirstName}",${record.cnp},${record.subscriptionType},${record.amount},${record.year},${record.month},${record.paymentDate}\n`;
             });
         } else {
             filename = `attendance_report_${new Date().toISOString().split("T")[0]}.csv`;
             csvContent = "ID,Student Name,CNP,Group,Gym,Class Date,Time,Attended\n";
             attendanceData.forEach((record) => {
-                csvContent += `${record.id},"${record.studentFirstName} ${record.studentLastName}",${record.cnp},${record.groupName},"${record.gymName} (${record.gymLocation})",${record.classDate},"${record.beginTime} - ${record.endTime}",${record.attended ? "Yes" : "No"}\n`;
+                csvContent += `${record.id},"${record.studentLastName} ${record.studentFirstName}",${record.cnp},${record.groupName},"${record.gymName} (${record.gymLocation})",${record.classDate},"${record.beginTime} - ${record.endTime}",${record.attended ? "Yes" : "No"}\n`;
             });
         }
 
@@ -337,7 +337,7 @@ export default function ReportsPage() {
                                         <option value="">All Students</option>
                                         {students.map((student) => (
                                             <option key={student.id} value={student.id}>
-                                                {student.firstName} {student.lastName} ({student.cnp})
+                                                {student.lastName} {student.firstName} ({student.cnp})
                                             </option>
                                         ))}
                                     </select>
@@ -463,7 +463,7 @@ export default function ReportsPage() {
                                             <tr key={record.id} style={{ borderBottom: "1px solid #ddd" }}>
                                                 <td style={{ padding: "12px" }}>{record.id}</td>
                                                 <td style={{ padding: "12px", fontWeight: "500" }}>
-                                                    {record.studentFirstName} {record.studentLastName}
+                                                    {record.studentLastName} {record.studentFirstName}
                                                 </td>
                                                 <td style={{ padding: "12px", fontFamily: "monospace" }}>{record.cnp}</td>
                                                 <td style={{ padding: "12px" }}>
@@ -507,7 +507,7 @@ export default function ReportsPage() {
                                         )}
                                         {selectedStudentId && (
                                             <span style={{ padding: "4px 10px", backgroundColor: "#9b59b6", color: "white", borderRadius: "4px", fontSize: "13px", fontWeight: "500" }}>
-                                                Student: {students.find(s => s.id === parseInt(selectedStudentId))?.firstName} {students.find(s => s.id === parseInt(selectedStudentId))?.lastName}
+                                                Student: {students.find(s => s.id === parseInt(selectedStudentId))?.lastName} {students.find(s => s.id === parseInt(selectedStudentId))?.firstName}
                                             </span>
                                         )}
                                         {selectedClassId && (
@@ -537,7 +537,7 @@ export default function ReportsPage() {
                                             <tr key={record.id} style={{ borderBottom: "1px solid #ddd" }}>
                                                 <td style={{ padding: "12px" }}>{record.id}</td>
                                                 <td style={{ padding: "12px", fontWeight: "500" }}>
-                                                    {record.studentFirstName} {record.studentLastName}
+                                                    {record.studentLastName} {record.studentFirstName}
                                                 </td>
                                                 <td style={{ padding: "12px", fontFamily: "monospace" }}>{record.cnp}</td>
                                                 <td style={{ padding: "12px" }}>{record.groupName}</td>

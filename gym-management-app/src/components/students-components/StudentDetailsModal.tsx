@@ -282,7 +282,7 @@ export default function StudentDetailsModal({
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="modal-header">
-                    <h2>👤 {student.firstName} {student.lastName}</h2>
+                    <h2>👤 {student.lastName} {student.firstName}</h2>
                     <button
                         className="modal-close"
                         onClick={onClose}
@@ -486,7 +486,7 @@ export default function StudentDetailsModal({
                                                 <div style={{ fontSize: "13px", color: "#555" }}>
                                                     {item.groupName ? `Group: ${item.groupName} • ` : ""}
                                                     Coach: {item.coachFirstName || item.coachLastName
-                                                        ? `${item.coachFirstName || ""} ${item.coachLastName || ""}`.trim()
+                                                        ? `${item.coachLastName || ""} ${item.coachFirstName || ""}`.trim()
                                                         : "System"}
                                                 </div>
                                             </div>
@@ -661,7 +661,7 @@ export default function StudentDetailsModal({
                             </p>
                             <p style={{ margin: "0 0 8px 0", color: "#555", fontSize: "14px" }}>
                                 Coach: {selectedNotification.coachFirstName || selectedNotification.coachLastName
-                                    ? `${selectedNotification.coachFirstName || ""} ${selectedNotification.coachLastName || ""}`.trim()
+                                    ? `${selectedNotification.coachLastName || ""} ${selectedNotification.coachFirstName || ""}`.trim()
                                     : "System"}
                             </p>
                             <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "12px" }}>

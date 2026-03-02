@@ -450,7 +450,7 @@ export default function AdminAttendancePage() {
                                                             }}
                                                         >
                                                             <td style={{ padding: "1rem", color: "var(--text-primary)" }}>
-                                                                <div style={{ fontWeight: 600 }}>{record.studentFirstName} {record.studentLastName}</div>
+                                                                <div style={{ fontWeight: 600 }}>{record.studentLastName} {record.studentFirstName}</div>
                                                                 <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>CNP: {record.cnp}</div>
                                                             </td>
                                                             <td style={{ padding: "1rem", textAlign: "center" }}>

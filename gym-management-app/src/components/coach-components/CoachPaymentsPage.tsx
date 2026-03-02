@@ -309,7 +309,7 @@ export default function CoachPaymentsPage() {
                                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                 <div>
                                                     <p style={{ margin: "0 0 0.25rem 0", fontWeight: 600, color: "var(--text-primary)" }}>
-                                                        {student.firstName} {student.lastName}
+                                                        {student.lastName} {student.firstName}
                                                     </p>
                                                     <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-secondary)" }}>
                                                         {formatSubscriptionType(student.subscriptionType)}
@@ -346,7 +346,7 @@ export default function CoachPaymentsPage() {
                                 <>
                                     <div className="card-container" style={{ marginBottom: "1.5rem", backgroundColor: "#f0f4f8" }}>
                                         <h3 style={{ margin: "0 0 1rem 0", color: "var(--text-primary)" }}>
-                                            👤 {selectedStudent.firstName} {selectedStudent.lastName}
+                                            👤 {selectedStudent.lastName} {selectedStudent.firstName}
                                         </h3>
                                         <p style={{ margin: "0 0 0.5rem 0" }}>
                                             <strong>Subscription:</strong> {formatSubscriptionType(selectedStudent.subscriptionType)}
@@ -490,7 +490,7 @@ export default function CoachPaymentsPage() {
 
                             <div className="modal-body">
                                 <p style={{ marginBottom: "1.5rem", color: "var(--text-secondary)" }}>
-                                    Student: <strong>{selectedStudent.firstName} {selectedStudent.lastName}</strong>
+                                    Student: <strong>{selectedStudent.lastName} {selectedStudent.firstName}</strong>
                                 </p>
 
                                 <div className="form-group" style={{ marginBottom: "1.5rem" }}>

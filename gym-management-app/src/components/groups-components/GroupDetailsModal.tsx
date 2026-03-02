@@ -346,7 +346,7 @@ export default function GroupDetailsModal({
                       {attendanceRecords.map((r) => (
                         <tr key={r.id}>
                           <td style={{ padding: "0.75rem 1rem" }}>
-                            {r.studentFirstName} {r.studentLastName}
+                            {r.studentLastName} {r.studentFirstName}
                           </td>
                           <td style={{ padding: "0.75rem 1rem", textAlign: "center" }}>
                             <span style={{
@@ -429,7 +429,7 @@ const StudentsTab = ({ students, allGroups, removeStudent, assignStudent, setSel
               })
               .map((s: any) => (
                 <tr key={s.id}>
-                  <td style={{ padding: "1rem" }}>{s.firstName} {s.lastName}</td>
+                  <td style={{ padding: "1rem" }}>{s.lastName} {s.firstName}</td>
                   <td style={{ padding: "1rem" }}>
                     <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                       <button className="btn-danger btn-sm" onClick={() => removeStudent(s.id)}>Remove</button>

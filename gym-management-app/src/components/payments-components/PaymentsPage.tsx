@@ -338,7 +338,7 @@ export default function PaymentsPage() {
         if (!selectedStudent) return;
         const doc = new jsPDF();
         doc.setFontSize(16);
-        doc.text(`Payments - ${selectedStudent.firstName} ${selectedStudent.lastName}`, 14, 18);
+        doc.text(`Payments - ${selectedStudent.lastName} ${selectedStudent.firstName}`, 14, 18);
         doc.setFontSize(10);
         doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 26);
         autoTable(doc, {
@@ -391,7 +391,7 @@ export default function PaymentsPage() {
             alert("This student does not have an email address. Please add one in Students Management.");
             return;
         }
-        if (!window.confirm(`Send payment reminder to ${student.firstName} ${student.lastName} (${student.email})?`)) return;
+        if (!window.confirm(`Send payment reminder to ${student.lastName} ${student.firstName} (${student.email})?`)) return;
 
         try {
             setSendingReminder(student.id);
@@ -411,7 +411,7 @@ export default function PaymentsPage() {
 
 
     const filteredStudents = studentPaymentStatus.filter((student) => {
-        const fullName = `${student.firstName} ${student.lastName}`.toLowerCase();
+        const fullName = `${student.lastName} ${student.firstName}`.toLowerCase();
         const searchLower = searchTerm.toLowerCase();
         return fullName.includes(searchLower) || student.id.toString().includes(searchTerm);
     });
@@ -593,7 +593,7 @@ export default function PaymentsPage() {
                                                     >
                                                         <td style={{ padding: "12px" }}>{student.id}</td>
                                                         <td style={{ padding: "12px", fontWeight: "500" }}>
-                                                            {student.firstName} {student.lastName}
+                                                            {student.lastName} {student.firstName}
                                                         </td>
                                                         <td style={{ padding: "12px" }}>
                                                             <span style={{
@@ -691,7 +691,7 @@ export default function PaymentsPage() {
                                                         const q = manageSearchTerm.trim().toLowerCase();
                                                         if (!q) return true;
                                                         return (
-                                                            `${s.firstName} ${s.lastName}`.toLowerCase().includes(q) ||
+                                                            `${s.lastName} ${s.firstName}`.toLowerCase().includes(q) ||
                                                             s.id.toString().includes(q)
                                                         );
                                                     })
@@ -704,7 +704,7 @@ export default function PaymentsPage() {
                                                             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
                                                         >
                                                             <td style={{ padding: "12px" }}>{student.id}</td>
-                                                            <td style={{ padding: "12px", fontWeight: "500" }}>{student.firstName} {student.lastName}</td>
+                                                            <td style={{ padding: "12px", fontWeight: "500" }}>{student.lastName} {student.firstName}</td>
                                                             <td style={{ padding: "12px" }}>
                                                                 <span style={{
                                                                     padding: "4px 8px", borderRadius: "4px", fontSize: "12px",
@@ -733,7 +733,7 @@ export default function PaymentsPage() {
                             ) : (
                                 <>
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                                        <h2 style={{ margin: 0, color: "#2c3e50" }}>👤 {selectedStudent.firstName} {selectedStudent.lastName}</h2>
+                                        <h2 style={{ margin: 0, color: "#2c3e50" }}>👤 {selectedStudent.lastName} {selectedStudent.firstName}</h2>
                                         <div style={{ display: "flex", gap: "10px" }}>
                                             <button
                                                 onClick={handleAddPayment}
@@ -829,7 +829,7 @@ export default function PaymentsPage() {
                                 {editingPayment ? "✏️ Edit Payment" : "➕ Add New Payment"}
                             </h2>
                             <p style={{ color: "#666", marginBottom: "20px" }}>
-                                Student: <strong>{selectedStudent.firstName} {selectedStudent.lastName}</strong>
+                                Student: <strong>{selectedStudent.lastName} {selectedStudent.firstName}</strong>
                             </p>
 
                             <div style={{ marginBottom: "20px" }}>

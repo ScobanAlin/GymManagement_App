@@ -63,7 +63,7 @@ export default function StudentsPage() {
 
         if (searchQuery.trim()) {
           groupStudents = groupStudents.filter((s) =>
-            `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
+            `${s.lastName} ${s.firstName}`.toLowerCase().includes(searchQuery.toLowerCase())
           );
         }
 
@@ -74,7 +74,7 @@ export default function StudentsPage() {
 
     if (searchQuery.trim()) {
       list = list.filter((s) =>
-        `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
+        `${s.lastName} ${s.firstName}`.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
