@@ -34,6 +34,7 @@ interface Student {
     lastName: string;
     status: string;
     subscriptionType: string;
+    groupName?: string | null;
 }
 
 type TabType = "monthly" | "history";
@@ -57,6 +58,7 @@ export default function PaymentsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [selectedGroup, setSelectedGroup] = useState<string>("all");
     const [manageSearchTerm, setManageSearchTerm] = useState("");
     const [selectedYear, setSelectedYear] = useState("");
     const [selectedMonthNum, setSelectedMonthNum] = useState("");
@@ -409,11 +411,26 @@ export default function PaymentsPage() {
         }
     };
 
+    const getStudentGroupName = (studentId: number) => {
+        const student = allStudents.find((s) => s.id === studentId);
+        return student?.groupName || "Ungrouped";
+    };
+
+    const groupOptions = Array.from(
+        new Set(
+            allStudents
+                .map((student) => student.groupName || "Ungrouped")
+                .filter(Boolean)
+        )
+    ).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
 
     const filteredStudents = studentPaymentStatus.filter((student) => {
         const fullName = `${student.lastName} ${student.firstName}`.toLowerCase();
         const searchLower = searchTerm.toLowerCase();
-        return fullName.includes(searchLower) || student.id.toString().includes(searchTerm);
+        const matchesSearch = fullName.includes(searchLower) || student.id.toString().includes(searchTerm);
+        const matchesGroup = selectedGroup === "all" || getStudentGroupName(student.id) === selectedGroup;
+        return matchesSearch && matchesGroup;
     });
 
     return (
@@ -536,22 +553,45 @@ export default function PaymentsPage() {
                             </div>
 
                             <div style={{ marginBottom: "20px" }}>
-                                <input
-                                    type="text"
-                                    placeholder="🔍 Search by student name or ID..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    style={{
-                                        padding: "10px 15px",
-                                        fontSize: "14px",
-                                        width: "100%",
-                                        maxWidth: "400px",
-                                        border: "2px solid #ddd",
-                                        borderRadius: "6px",
-                                        boxSizing: "border-box",
-                                        fontFamily: "inherit"
-                                    }}
-                                />
+                                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                                    <input
+                                        type="text"
+                                        placeholder="🔍 Search by student name or ID..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        style={{
+                                            padding: "10px 15px",
+                                            fontSize: "14px",
+                                            width: "100%",
+                                            maxWidth: "400px",
+                                            border: "2px solid #ddd",
+                                            borderRadius: "6px",
+                                            boxSizing: "border-box",
+                                            fontFamily: "inherit"
+                                        }}
+                                    />
+
+                                    <select
+                                        value={selectedGroup}
+                                        onChange={(e) => setSelectedGroup(e.target.value)}
+                                        style={{
+                                            padding: "10px 12px",
+                                            fontSize: "14px",
+                                            minWidth: "220px",
+                                            border: "2px solid #ddd",
+                                            borderRadius: "6px",
+                                            backgroundColor: "white",
+                                            fontFamily: "inherit"
+                                        }}
+                                    >
+                                        <option value="all">All groups</option>
+                                        {groupOptions.map((groupName) => (
+                                            <option key={groupName} value={groupName}>
+                                                {groupName}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
                             {studentPaymentStatus.length === 0 ? (
