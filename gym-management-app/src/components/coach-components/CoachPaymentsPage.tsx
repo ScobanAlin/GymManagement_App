@@ -57,6 +57,7 @@ export default function CoachPaymentsPage() {
     const [studentPayments, setStudentPayments] = useState<Payment[]>([]);
     const [studentPaymentsAll, setStudentPaymentsAll] = useState<Payment[]>([]);
     const [saving, setSaving] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
 
     // Fetch students with current month payment status
     useEffect(() => {
@@ -229,6 +230,13 @@ export default function CoachPaymentsPage() {
         return normalized.charAt(0).toUpperCase() + normalized.slice(1);
     };
 
+    const filteredStudents = students.filter(s => {
+        const fullName = `${s.firstName} ${s.lastName}`.toLowerCase();
+        const reverseName = `${s.lastName} ${s.firstName}`.toLowerCase();
+        const term = searchTerm.toLowerCase();
+        return fullName.includes(term) || reverseName.includes(term);
+    });
+
     const paidCount = students.filter(s => s.isPaid).length;
     const unpaidCount = students.length - paidCount;
 
@@ -280,7 +288,28 @@ export default function CoachPaymentsPage() {
                             </div>
 
                             <h3 style={{ marginBottom: "1rem", color: "var(--text-primary)" }}>📋 Students</h3>
-                            {students.length === 0 ? (
+
+                            <div style={{ marginBottom: "1rem" }}>
+                                <input
+                                    type="text"
+                                    placeholder="🔍 Search students..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    style={{
+                                        width: "100%",
+                                        padding: "0.75rem 1rem",
+                                        border: "1px solid var(--border-color)",
+                                        borderRadius: "8px",
+                                        fontSize: "1rem",
+                                        boxSizing: "border-box",
+                                        outline: "none",
+                                        backgroundColor: "var(--bg-secondary)",
+                                        color: "var(--text-primary)",
+                                    }}
+                                />
+                            </div>
+
+                            {filteredStudents.length === 0 ? (
                                 <div className="card-container">
                                     <div className="empty-state">
                                         <div className="empty-state-icon">🔍</div>
@@ -289,7 +318,7 @@ export default function CoachPaymentsPage() {
                                 </div>
                             ) : (
                                 <div style={{ display: "grid", gap: "0.5rem", maxHeight: "600px", overflowY: "auto" }}>
-                                    {students.map(student => (
+                                    {filteredStudents.map(student => (
                                         <div
                                             key={student.id}
                                             onClick={() => handleSelectStudent(student)}
