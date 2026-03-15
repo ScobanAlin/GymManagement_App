@@ -66,22 +66,7 @@ export default function StudentsPage() {
     let list = [...students];
 
     if (selectedGroup !== "all") {
-      apiClient.get(`/groups/${selectedGroup}/students`).then((res) => {
-        let groupStudents = res.data as Student[];
-
-        if (searchQuery.trim()) {
-          groupStudents = groupStudents.filter((s) =>
-            `${s.lastName} ${s.firstName}`.toLowerCase().includes(searchQuery.toLowerCase())
-          );
-        }
-
-        if (statusFilter !== "all") {
-          groupStudents = groupStudents.filter((s) => s.status === statusFilter);
-        }
-
-        setFilteredStudents(sortByActiveness(groupStudents));
-      });
-      return;
+      list = list.filter((s) => s.groupId === Number(selectedGroup));
     }
 
     if (searchQuery.trim()) {
