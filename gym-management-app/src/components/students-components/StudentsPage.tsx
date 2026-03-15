@@ -28,6 +28,7 @@ export default function StudentsPage() {
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<number | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -53,6 +54,13 @@ export default function StudentsPage() {
     loadGroups();
   }, [loadStudents, loadGroups]);
 
+  /** Sort helper — active students first */
+  const sortByActiveness = (list: Student[]) =>
+    [...list].sort((a, b) => {
+      const order = (s?: string) => (s === "active" ? 0 : 1);
+      return order(a.status) - order(b.status);
+    });
+
   /** Filter logic */
   useEffect(() => {
     let list = [...students];
@@ -67,7 +75,11 @@ export default function StudentsPage() {
           );
         }
 
-        setFilteredStudents(groupStudents);
+        if (statusFilter !== "all") {
+          groupStudents = groupStudents.filter((s) => s.status === statusFilter);
+        }
+
+        setFilteredStudents(sortByActiveness(groupStudents));
       });
       return;
     }
@@ -78,8 +90,12 @@ export default function StudentsPage() {
       );
     }
 
-    setFilteredStudents(list);
-  }, [students, selectedGroup, searchQuery]);
+    if (statusFilter !== "all") {
+      list = list.filter((s) => s.status === statusFilter);
+    }
+
+    setFilteredStudents(sortByActiveness(list));
+  }, [students, selectedGroup, searchQuery, statusFilter]);
 
   const handleSelectStudent = async (student: Student) => {
     const res = await apiClient.get(`/students/${student.id}`);
@@ -158,6 +174,20 @@ export default function StudentsPage() {
                   {g.name}
                 </option>
               ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label>Filter by status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) =>
+                setStatusFilter(e.target.value as "all" | "active" | "inactive")
+              }
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
             </select>
           </div>
         </div>

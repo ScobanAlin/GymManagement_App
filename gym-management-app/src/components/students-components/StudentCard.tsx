@@ -7,12 +7,16 @@ type Props = {
 };
 
 export default function StudentCard({ student, onClick }: Props) {
+    const isActive = student.status === "active";
+    const borderColor = isActive ? "#22c55e" : "#ef4444";
+
     return (
         <div
             onClick={onClick}
             className="card-container"
             style={{
                 cursor: "pointer",
+                borderLeft: `4px solid ${borderColor}`,
             }}
         >
             <h3 style={{ margin: "0 0 0.5rem 0", color: "var(--text-primary)" }}>
