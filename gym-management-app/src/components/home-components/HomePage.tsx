@@ -73,6 +73,7 @@ function StatCard({
 
 interface Student {
     id: number;
+    status: string;
 }
 
 interface Group {
