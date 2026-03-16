@@ -171,7 +171,7 @@ export default function HomePage() {
                         }),
                     ]);
 
-                    setStudentsCount((studentsRes.data as Student[]).length);
+                    setStudentsCount((studentsRes.data as Student[]).filter(s => s.status === 'active').length);
                     setGroupsCount((groupsRes.data as Group[]).length);
                     setCoachesCount((coachesRes.data as Coach[]).length);
                     setGymsCount((gymsRes.data as unknown[]).length);

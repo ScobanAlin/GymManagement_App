@@ -38,12 +38,29 @@ export default function AdminAttendancePage() {
     const [filterMonth, setFilterMonth] = useState("");
     const [filterDay, setFilterDay] = useState("");
     const [filterGroup, setFilterGroup] = useState("");
+    const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
+
+    const getDefaultRange = (tab: "upcoming" | "past") => {
+        const today = new Date().toISOString().split("T")[0];
+        if (tab === "upcoming") {
+            return { startDate: today, endDate: new Date(Number(currentYear), 11, 31).toISOString().split("T")[0] };
+        }
+        return { startDate: new Date(Number(currentYear), 0, 1).toISOString().split("T")[0], endDate: today };
+    };
 
     useEffect(() => {
-        const startDate = new Date(Number(currentYear), 0, 1).toISOString().split("T")[0];
-        const endDate = new Date(Number(currentYear), 11, 31).toISOString().split("T")[0];
-        fetchAllClasses({ startDate, endDate });
+        fetchAllClasses(getDefaultRange("upcoming"));
     }, []);
+
+    const switchTab = (tab: "upcoming" | "past") => {
+        setActiveTab(tab);
+        setFilterYear(currentYear);
+        setFilterMonth("");
+        setFilterDay("");
+        setFilterGroup("");
+        setError(null);
+        fetchAllClasses(getDefaultRange(tab));
+    };
 
     const fetchAllClasses = async (range?: { startDate: string; endDate: string }) => {
         try {
@@ -121,9 +138,7 @@ export default function AdminAttendancePage() {
         setFilterDay("");
         setFilterGroup("");
         setError(null);
-        const startDate = new Date(Number(currentYear), 0, 1).toISOString().split("T")[0];
-        const endDate = new Date(Number(currentYear), 11, 31).toISOString().split("T")[0];
-        fetchAllClasses({ startDate, endDate });
+        fetchAllClasses(getDefaultRange(activeTab));
     };
 
     const fetchClassAttendance = async (classId: number) => {
@@ -204,6 +219,45 @@ export default function AdminAttendancePage() {
                     <div style={{ display: "grid", gridTemplateColumns: "350px 1fr", gap: "2rem" }}>
                         <div>
                             <h3 style={{ marginBottom: "1rem", color: "var(--text-primary)" }}>📚 Scheduled Classes</h3>
+
+                            {/* Tabs */}
+                            <div style={{ display: "flex", marginBottom: "1rem", borderRadius: "10px", overflow: "hidden", border: "1.5px solid var(--border-color)" }}>
+                                <button
+                                    onClick={() => switchTab("upcoming")}
+                                    style={{
+                                        flex: 1,
+                                        padding: "0.65rem 0",
+                                        border: "none",
+                                        cursor: "pointer",
+                                        fontWeight: 700,
+                                        fontSize: "0.9rem",
+                                        fontFamily: "inherit",
+                                        backgroundColor: activeTab === "upcoming" ? "#4338ca" : "transparent",
+                                        color: activeTab === "upcoming" ? "#fff" : "var(--text-primary)",
+                                        transition: "all 0.2s",
+                                    }}
+                                >
+                                    Upcoming
+                                </button>
+                                <button
+                                    onClick={() => switchTab("past")}
+                                    style={{
+                                        flex: 1,
+                                        padding: "0.65rem 0",
+                                        border: "none",
+                                        borderLeft: "1.5px solid var(--border-color)",
+                                        cursor: "pointer",
+                                        fontWeight: 700,
+                                        fontSize: "0.9rem",
+                                        fontFamily: "inherit",
+                                        backgroundColor: activeTab === "past" ? "#4338ca" : "transparent",
+                                        color: activeTab === "past" ? "#fff" : "var(--text-primary)",
+                                        transition: "all 0.2s",
+                                    }}
+                                >
+                                    Past
+                                </button>
+                            </div>
                             <div className="card-container" style={{ marginBottom: "1rem" }}>
                                 <p style={{ margin: "0 0 1rem 0", fontWeight: 600, fontSize: "0.95rem", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "6px" }}>
                                     🔍 Filter by Date
