@@ -105,6 +105,10 @@ export default function GroupsPage() {
           isOpen={detailsModalOpen}
           onClose={() => setDetailsModalOpen(false)}
           onDelete={handleDeleteGroup}
+          onRename={async (updated) => {
+            setSelectedGroup(updated);
+            await loadGroups();
+          }}
           group={selectedGroup}
           students={groupStudents}
           classes={groupClasses}

@@ -35,6 +35,7 @@ type GroupDetailsModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onDelete: (groupId: number) => void;
+  onRename: (group: Group) => void;
   group: Group | null;
   students: Student[];
   classes: ClassItem[];
@@ -81,6 +82,7 @@ export default function GroupDetailsModal({
   isOpen,
   onClose,
   onDelete,
+  onRename,
   group,
   students,
   allGroups,
@@ -88,6 +90,12 @@ export default function GroupDetailsModal({
   refresh,
 }: GroupDetailsModalProps) {
   const [activeTab, setActiveTab] = useState<"students" | "schedule" | "past">("students");
+  const isAdmin = JSON.parse(localStorage.getItem("user") || "{}")?.role === "admin";
+
+  // ── Rename group (admin only) ─────────────────────────────────────────────
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [nameSaving, setNameSaving] = useState(false);
 
   // ── Students tab ──────────────────────────────────────────────────────────
   const [selectedGroupForReassign, setSelectedGroupForReassign] = useState<number | null>(null);
@@ -140,6 +148,10 @@ export default function GroupDetailsModal({
       setPastLoading(false);
     }
   }, [group]);
+
+  useEffect(() => {
+    setIsEditingName(false);
+  }, [group?.id, isOpen]);
 
   useEffect(() => {
     if (activeTab === "schedule") loadSchedule();
@@ -224,6 +236,29 @@ export default function GroupDetailsModal({
     setPastClasses((prev) => prev.filter((c) => c.id !== classId));
   };
 
+  const startEditName = () => {
+    setNameDraft(group.name);
+    setIsEditingName(true);
+  };
+
+  const confirmRename = async () => {
+    const name = nameDraft.trim();
+    if (!name) return alert("Group name cannot be empty");
+    if (name === group.name) return setIsEditingName(false);
+
+    setNameSaving(true);
+    try {
+      const res = await apiClient.put(`/groups/${group.id}`, { name });
+      onRename(res.data);
+      setIsEditingName(false);
+    } catch (e: any) {
+      console.error("Failed to rename group", e);
+      alert(e?.response?.data?.message ?? "Failed to rename group");
+    } finally {
+      setNameSaving(false);
+    }
+  };
+
   const handleDeleteGroup = () => {
     if (window.confirm(`Delete group "${group.name}"?`)) {
       onDelete(group.id);
@@ -251,7 +286,34 @@ export default function GroupDetailsModal({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="modal-header">
-            <h2>📘 {group.name}</h2>
+            {isEditingName ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: 1, marginRight: "1rem" }}>
+                <input
+                  type="text"
+                  value={nameDraft}
+                  autoFocus
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") confirmRename();
+                    if (e.key === "Escape") setIsEditingName(false);
+                  }}
+                  style={{ flex: 1, padding: "0.5rem", border: "1px solid var(--border-color)", borderRadius: "6px", fontSize: "1rem" }}
+                />
+                <button className="btn-primary btn-sm" onClick={confirmRename} disabled={nameSaving}>
+                  {nameSaving ? "Saving…" : "✓ Confirm"}
+                </button>
+                <button className="btn-secondary btn-sm" onClick={() => setIsEditingName(false)} disabled={nameSaving}>
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <h2>📘 {group.name}</h2>
+                {isAdmin && (
+                  <button className="modal-close" onClick={startEditName} title="Modify name">✏️</button>
+                )}
+              </div>
+            )}
             <button className="modal-close" onClick={handleDeleteGroup}>🗑</button>
           </div>
 
