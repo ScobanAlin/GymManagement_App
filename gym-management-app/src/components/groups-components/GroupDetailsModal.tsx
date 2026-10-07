@@ -310,7 +310,14 @@ export default function GroupDetailsModal({
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <h2>📘 {group.name}</h2>
                 {isAdmin && (
-                  <button className="modal-close" onClick={startEditName} title="Modify name">✏️</button>
+                  <button
+                    className="btn-secondary btn-sm"
+                    onClick={startEditName}
+                    title="Modify name"
+                    style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", padding: "0.35rem 0.75rem", whiteSpace: "nowrap" }}
+                  >
+                    ✏️ Edit
+                  </button>
                 )}
               </div>
             )}
